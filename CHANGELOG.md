@@ -2,6 +2,13 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] — unreleased
+
+- Firefox for Android is no longer declared as supported until it has been tested (planned for 0.2.0)
+- On browsers without a sidebar (Firefox for Android) the "Open in sidebar" option is hidden and can never disable the toolbar button
+- The popup fits narrow phone screens instead of being cut off at 480 px
+- Keyboard shortcuts are hidden where the browser doesn't support them
+
 ## [0.1.0] — unreleased
 
 First version.

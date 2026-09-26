@@ -10,6 +10,7 @@
   const params = new URLSearchParams(location.search);
   const context = params.has('sidebar') ? 'sidebar' : params.has('page') ? 'tab' : 'popup';
   const isExtension = typeof browser !== 'undefined' && !!(browser.runtime && browser.runtime.id);
+  const mobilePreview = !isExtension && /[#&?]mobile\b/.test(location.href); // design preview of the phone layout
 
   // Firefox does not run extensions on these sites (extensions.webextensions.restrictedDomains)
   const RESTRICTED = new Set([
@@ -40,6 +41,8 @@
     isExtension: true,
     context,
     pageKind,
+    get hasSidebar() { return !!(browser.sidebarAction && browser.sidebarAction.toggle); },
+    get hasShortcuts() { return !!(browser.commands && browser.commands.getAll); },
 
     async load() { return AE.normalize(await browser.storage.local.get(AE.KEYS)); },
     persist(patch) { return browser.runtime.sendMessage({ type: 'persist', patch }).catch(() => browser.storage.local.set(patch)); },
@@ -123,6 +126,9 @@
     isExtension: false,
     context,
     pageKind,
+    mobilePreview,
+    hasSidebar: !mobilePreview,
+    hasShortcuts: !mobilePreview,
 
     async load() {
       const d = mockRead();
