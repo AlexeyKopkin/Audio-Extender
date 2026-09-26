@@ -2,6 +2,10 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+- Minimum Firefox version is now 142 (needed for the "no data collection" declaration on all platforms; removes the AMO validation warning)
+
 ## [0.1.1] — unreleased
 
 - Firefox for Android is no longer declared as supported until it has been tested (planned for 0.2.0)
