@@ -20,7 +20,7 @@ Other fields:
 - **Compatibility:** Firefox for desktop
 - **Source code submission:** No — the code is plain, unminified JavaScript without a build step
 
-The description is written in the HTML subset AMO accepts (`<b>`, `<ul>`, `<li>`, `<code>`, `<a>`); paste the content of the ```` ```html ```` block as is.
+The description uses the Markdown subset AMO supports (bold, lists, inline code, links); paste the content of the ```` ```markdown ```` block as is.
 
 ## Notes to reviewer
 

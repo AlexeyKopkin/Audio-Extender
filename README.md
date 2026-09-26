@@ -87,6 +87,6 @@ Audio Extender is free and ad-free. If it makes your day a little louder, you ca
 
 ## License
 
-[GNU General Public License v3.0 or later](LICENSE).
+[GNU General Public License v3.0](LICENSE).
 
 The license covers the source code only. The name **“Audio Extender”** and its logo are not licensed for use by forks or derivative works — please use a different name and logo for your own version.
