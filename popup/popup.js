@@ -54,9 +54,10 @@
   if (!API.isExtension) root.classList.add('preview');
   // Firefox for Android opens the popup as a full-screen page: fit the screen instead of 480×600.
   if (/Android/i.test(navigator.userAgent) || API.mobilePreview) root.classList.add('mobile');
-  // hide what this Firefox doesn't have (Android: no sidebar, no keyboard shortcuts)
+  // hide what this Firefox doesn't have (Android: no sidebar, no keyboard shortcuts, no tab muting)
   $('#row-sidebar').classList.toggle('hidden', !API.hasSidebar);
   $('#card-hotkeys').classList.toggle('hidden', !API.hasShortcuts);
+  $('#mute-others').classList.toggle('hidden', !API.canMute);
   if (API.context === 'sidebar') root.classList.add('sidebar');
   if (API.context === 'tab') root.classList.add('page');
 
@@ -1020,10 +1021,10 @@
             <div class="mix-controls"><input type="range" min="0" max="${AE.MAX_GAIN}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
             <div class="mini-meter"><i></i></div>
           </div>
-          <div class="mix-btns">
+          ${API.canMute ? `<div class="mix-btns">
             <button class="mb mute" title="${esc(tr(muted ? 'mixer.unmute' : 'mixer.mute'))}"><svg class="ic"><use href="#i-volume${muted ? '-x' : ''}"/></svg></button>
             <button class="mb solo${soloMuted.length && !muted && t.audible ? ' active' : ''}" title="${esc(tr('mixer.solo'))}">S</button>
-          </div>
+          </div>` : ''}
         </div>`;
       }).join(''));
       $$('.mix-item input[type=range]', list).forEach(paintRange);
