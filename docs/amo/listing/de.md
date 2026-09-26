@@ -40,6 +40,9 @@ Einstellungen werden pro Website gespeichert und bleiben nach einem Neustart des
 **🎨 Ganz nach deinem Geschmack**
 5 Designs (Neon, Cyber, Sunset, Aurora, Light), 6 Sprachen, Popup oder Seitenleiste, Tastenkürzel: `Alt+Shift+A` öffnen, `Alt+Shift+↑/↓` Lautstärke, `Alt+Shift+B` ein/aus.
 
+**📱 Auch auf Android**
+Funktioniert auch in Firefox für Android: derselbe Booster, Equalizer und dieselben Effekte, bequem mit dem Finger bedienbar. (Seitenleiste, Tastenkürzel und Stummschalten von Tabs nur am Computer.)
+
 **🔒 Privatsphäre von Anfang an**
 Keine Datensammlung, keine Werbung, keine Analyse. Der gesamte Klang wird lokal in deinem Browser verarbeitet. Einzige Netzwerkanfrage: der Download der öffentlichen AutoEq-Datenbank, wenn du nach deinen Kopfhörern suchst.
 

@@ -39,7 +39,7 @@ Free, no ads, no tracking.
 
 **[Get Audio Extender on Firefox Add-ons →](https://addons.mozilla.org/firefox/addon/audio-extender/)**
 
-Click *Add to Firefox* on the official Mozilla page — updates then arrive automatically. Requires Firefox 142 or newer.
+Click *Add to Firefox* on the official Mozilla page — updates then arrive automatically. Requires Firefox 142 or newer, on the computer or on Android (on Android there is no sidebar, no keyboard shortcuts and no muting of tabs).
 
 ## How to use
 

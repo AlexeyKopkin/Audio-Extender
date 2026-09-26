@@ -40,6 +40,9 @@ Settings are saved per site and stay after a browser restart.
 **🎨 Make it yours**
 5 themes (Neon, Cyber, Sunset, Aurora, Light), 6 languages, popup or sidebar, keyboard shortcuts: `Alt+Shift+A` open, `Alt+Shift+↑/↓` volume, `Alt+Shift+B` on/off.
 
+**📱 Also on Android**
+Works in Firefox for Android too — the same booster, equalizer and effects, sized for your finger. (Sidebar, keyboard shortcuts and muting tabs are desktop-only.)
+
 **🔒 Private by design**
 No data collection, no ads, no analytics. All sound processing happens locally in your browser. The only network request: downloading the public AutoEq database when you search for your headphones.
 

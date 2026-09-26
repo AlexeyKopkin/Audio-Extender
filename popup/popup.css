@@ -934,6 +934,19 @@ html.sidebar .bg-orbs span:nth-child(2) { bottom: -60px; }
 /* phones (Firefox for Android): use the whole screen */
 html.mobile body { width: 100%; height: 100vh; }
 html.mobile.preview body { width: 380px; height: 760px; }
+/* finger-sized targets (≥ 40 px) */
+html.mobile .icon-btn,
+html.mobile .mb { width: 40px; height: 40px; }
+html.mobile .tab { padding: 10px 0 8px; }
+html.mobile .chip { padding: 11px 14px; }
+html.mobile .seg button { padding: 12px 4px; }
+html.mobile .band-chip { padding: 10px 12px 10px 6px; }
+html.mobile .btn,
+html.mobile .btn.small,
+html.mobile select,
+html.mobile .ae-pick { height: 40px; }
+/* save battery: no drifting background */
+html.mobile .bg-orbs span { animation: none; }
 
 /* full tab (import page) */
 html.page body { margin: 24px auto; border-radius: 18px; border: 1px solid var(--border); }

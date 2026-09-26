@@ -57,7 +57,10 @@
 
     async activeTab() {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      return tab || null;
+      if (tab) return tab;
+      // Firefox for Android may open the popup outside the page's window: take the focused web page.
+      const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+      return tabs.find((t) => /^https?:/.test(t.url || '')) || null;
     },
     onActiveTabChanged(cb) {
       browser.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
