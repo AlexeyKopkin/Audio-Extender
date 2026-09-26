@@ -52,6 +52,11 @@
   let lastEdit = 0;
 
   if (!API.isExtension) root.classList.add('preview');
+  // Firefox for Android opens the popup as a full-screen page: fit the screen instead of 480×600.
+  if (/Android/i.test(navigator.userAgent) || API.mobilePreview) root.classList.add('mobile');
+  // hide what this Firefox doesn't have (Android: no sidebar, no keyboard shortcuts)
+  $('#row-sidebar').classList.toggle('hidden', !API.hasSidebar);
+  $('#card-hotkeys').classList.toggle('hidden', !API.hasShortcuts);
   if (API.context === 'sidebar') root.classList.add('sidebar');
   if (API.context === 'tab') root.classList.add('page');
 

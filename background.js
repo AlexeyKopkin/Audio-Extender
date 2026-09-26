@@ -99,13 +99,17 @@ browser.tabs.onRemoved.addListener(async (tabId) => {
 browser.windows.onFocusChanged.addListener(() => updateDucking());
 
 /* ---------- sidebar mode ---------- */
+// Firefox for Android has no sidebar: there the popup must always stay enabled,
+// otherwise the toolbar button would do nothing.
+const HAS_SIDEBAR = !!(browser.sidebarAction && browser.sidebarAction.toggle);
+
 async function applySidebarMode() {
   await ready;
-  await browser.action.setPopup({ popup: data.app.sidebar ? '' : POPUP });
+  await browser.action.setPopup({ popup: HAS_SIDEBAR && data.app.sidebar ? '' : POPUP });
 }
 browser.action.onClicked.addListener(() => {
   // Only fires when the popup is disabled, i.e. in sidebar mode.
-  browser.sidebarAction.toggle();
+  if (HAS_SIDEBAR) browser.sidebarAction.toggle();
 });
 
 /* ---------- keyboard shortcuts ---------- */

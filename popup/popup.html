@@ -359,7 +359,7 @@
         <div class="toggle-row"><span data-i18n="set.autoEnable">Enable automatically on new sites</span><label class="switch"><input type="checkbox" data-app="autoEnable"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.badge">Show gain on the toolbar icon</span><label class="switch"><input type="checkbox" data-app="badge"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.animations">Spectrum and meter animations</span><label class="switch"><input type="checkbox" data-app="animations"><span></span></label></div>
-        <div class="toggle-row"><span data-i18n="set.sidebar">Open in sidebar</span><label class="switch"><input type="checkbox" data-app="sidebar"><span></span></label></div>
+        <div class="toggle-row" id="row-sidebar"><span data-i18n="set.sidebar">Open in sidebar</span><label class="switch"><input type="checkbox" data-app="sidebar"><span></span></label></div>
       </div>
 
       <div class="card compact">
@@ -367,7 +367,7 @@
         <div id="profiles"></div>
       </div>
 
-      <div class="card compact">
+      <div class="card compact" id="card-hotkeys">
         <div class="section-title"><svg class="ic xs"><use href="#i-keyboard"/></svg><span data-i18n="set.hotkeys">Keyboard shortcuts</span></div>
         <div id="hotkeys"></div>
         <p class="sub note" data-i18n="set.hk.note">Change: about:addons → ⚙ → Manage Extension Shortcuts</p>
