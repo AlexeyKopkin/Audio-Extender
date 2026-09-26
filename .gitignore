@@ -1,0 +1,28 @@
+# Build output / packaged extension
+dist/
+build/
+web-ext-artifacts/
+*.xpi
+*.zip
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local backups made during edits
+*.bkp
+
+# Secrets (AMO API keys for web-ext sign)
+.env
+.env.*

@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Audio Extender"
+  },
+  "extDescription": {
+    "message": "Усилитель громкости до 600%, параметрический эквалайзер и аудиоэффекты для любой вкладки."
+  },
+  "cmdOpen": {
+    "message": "Открыть Audio Extender"
+  },
+  "cmdGainUp": {
+    "message": "Усиление +10%"
+  },
+  "cmdGainDown": {
+    "message": "Усиление −10%"
+  },
+  "cmdToggle": {
+    "message": "Вкл / выкл обработку"
+  }
+}

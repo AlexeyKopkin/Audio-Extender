@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Audio Extender"
+  },
+  "extDescription": {
+    "message": "Amplificatore di volume fino al 600%, equalizzatore parametrico ed effetti audio per ogni scheda."
+  },
+  "cmdOpen": {
+    "message": "Apri Audio Extender"
+  },
+  "cmdGainUp": {
+    "message": "Guadagno +10%"
+  },
+  "cmdGainDown": {
+    "message": "Guadagno −10%"
+  },
+  "cmdToggle": {
+    "message": "Attiva / disattiva l’elaborazione"
+  }
+}

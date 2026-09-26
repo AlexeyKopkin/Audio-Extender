@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Audio Extender"
+  },
+  "extDescription": {
+    "message": "Lautstärke-Booster bis 600 %, parametrischer Equalizer und Audioeffekte für jeden Tab."
+  },
+  "cmdOpen": {
+    "message": "Audio Extender öffnen"
+  },
+  "cmdGainUp": {
+    "message": "Verstärkung +10 %"
+  },
+  "cmdGainDown": {
+    "message": "Verstärkung −10 %"
+  },
+  "cmdToggle": {
+    "message": "Verarbeitung ein / aus"
+  }
+}
