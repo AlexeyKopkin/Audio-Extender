@@ -1,83 +1,89 @@
 # Audio Extender
 
-A Firefox extension that makes any browser tab sound better: volume booster up to 600%, a full parametric equalizer and audio effects — with a modern, themeable UI.
+**Make any website sound better in Firefox.** Too quiet video? Voices lost behind music? Headphones that sound flat? Audio Extender boosts the volume up to 600% without distortion, gives you a real studio-grade equalizer and fixes the sound of every tab — YouTube, Twitch, podcasts, online courses, browser games and more.
 
-> **Status:** early development (v0.1). Requires Firefox 140 or later.
+Free, no ads, no tracking.
 
-## Features
+<p align="center">
+  <img src="docs/screenshots/booster.png" width="260" alt="Volume booster">
+  <img src="docs/screenshots/equalizer.png" width="260" alt="Equalizer">
+  <img src="docs/screenshots/effects.png" width="260" alt="Effects">
+</p>
 
-- **Booster** — up to 600% gain with a built-in limiter, so loud never means distorted
-- **Equalizer** — parametric EQ with draggable bands on a live frequency-response curve, plus 10- and 31-band graphic modes, presets and headphone correction (AutoEq)
-- **Effects** — clear dialogue, night mode, bass boost, stereo width, loudness normalization, mono, L/R balance, playback speed with pitch preservation
-- **Mixer** — every tab playing audio in one place: per-tab volume, mute and solo
-- **Per-site profiles** — settings are remembered for each site
-- **Themes** — Neon (default), Cyber, Sunset, Aurora, Light
-- **Languages** — English, Русский, Українська, Deutsch, Italiano, Français
+## What you can do
 
-## How it works
+**🔊 Make quiet videos loud** — raise the volume up to 600%. A built-in limiter keeps it clean: louder, but never crackling or distorted.
 
-Firefox has no `tabCapture` API, so the extension processes audio inside the page: it routes the page's `<audio>` / `<video>` elements and Web Audio graphs through its own Web Audio chain:
+**🎚️ Shape the sound exactly how you like** — drag points on the equalizer curve to boost bass, bring out vocals or tame harsh highs. Prefer sliders? Switch to 10 or 31 bands. Ready-made presets (Bass Boost, Vocal, Podcast, Rock…) and your own saved presets are one click away.
 
-```
-AutoEq → EQ → bass → dialogue → night mode → stereo (width / mono / balance) → normalization → gain → limiter → soft clipper
-```
+**🎧 Correct your headphones** — pick your model from a database of thousands of headphones (AutoEq) and hear them as they should sound.
 
-- Nothing is touched while all settings are neutral — media is only routed once processing is actually needed.
-- Media served from another domain without CORS permission is never routed (Web Audio would turn it silent); it keeps playing untouched and the popup says so.
-- A media element is only routed once its AudioContext is allowed to run, so autoplay rules can't mute it.
+**✨ Fix common problems with one switch**
+- **Clear dialogue** — understand voices in films and streams even when the music is loud
+- **Night mode** — quiet scenes louder, explosions quieter, so nobody wakes up
+- **Bass boost** and **stereo width** — more punch and a wider stage
+- **Normalization** — every video plays at a similar loudness, no more jumping for the volume knob
+- **Mono** and **left/right balance** — for one earbud or hearing on one side
+- **Playback speed** — speed up lectures and podcasts without chipmunk voices
+
+**🎛️ Control all tabs from one place** — the Mixer lists every tab playing sound: set each one's volume, mute it, play one solo, or lower other tabs automatically while you watch something.
+
+**💾 It remembers** — settings are saved per site, so YouTube and Twitch can each sound the way you like. Everything stays after a browser restart.
+
+<p align="center">
+  <img src="docs/screenshots/mixer.png" width="260" alt="Mixer">
+  <img src="docs/screenshots/settings.png" width="260" alt="Settings">
+</p>
+
+## Install
+
+Audio Extender is coming soon to **Firefox Add-ons** (addons.mozilla.org). Requires Firefox 140 or newer.
+
+Want to try it right now? Download this repository, open `about:debugging` in Firefox → *This Firefox* → *Load Temporary Add-on…* and pick `manifest.json`. (A temporary add-on is removed when Firefox closes.)
+
+## How to use
+
+1. Open a page with sound and click the **Audio Extender** button in the toolbar.
+2. Turn the gain dial, pick an EQ preset or switch on an effect — you hear the change instantly.
+3. That's it: the settings are remembered for this site. The **⏻** button turns processing off, **↺** resets the site to default.
+
+**Keyboard shortcuts**
+
+| Action | Shortcut |
+|---|---|
+| Open Audio Extender | `Alt` + `Shift` + `A` |
+| Volume +10% | `Alt` + `Shift` + `↑` |
+| Volume −10% | `Alt` + `Shift` + `↓` |
+| Turn processing on / off | `Alt` + `Shift` + `B` |
+
+You can change them in `about:addons` → ⚙ → *Manage Extension Shortcuts*.
+
+Prefer a bigger panel? Turn on **Open in sidebar** in Settings.
+
+## Themes and languages
+
+Five themes — **Neon**, **Cyber**, **Sunset**, **Aurora** and **Light** — and six languages: English, Русский, Українська, Deutsch, Italiano, Français.
+
+## Where it can't work, and why
+
+Audio Extender tells you in the panel when a page can't be processed:
+
+- **Firefox's own pages** (settings, about: pages, the PDF viewer, addons.mozilla.org) — Firefox doesn't allow any extension there.
+- **Protected (DRM) music and video**, such as Spotify or Netflix — the browser doesn't let extensions change protected audio. It keeps playing normally, just without effects.
+- **Some audio loaded from another website** — if that website doesn't permit processing, the sound plays unchanged instead of going silent.
+- **Private windows** — only if you allow the extension there (`about:addons` → Audio Extender → *Run in Private Windows*).
 
 ## Privacy
 
-Audio Extender collects no data. All processing happens locally in the browser. The only network request is made when you search for headphones: the public [AutoEq](https://github.com/jaakkopasanen/AutoEq) database (MIT) is downloaded from GitHub and cached.
+Audio Extender collects **no data** and has no ads or analytics. All sound processing happens on your computer, inside the browser. The only time it connects to the internet is when you search for your headphones — then it downloads the public [AutoEq](https://github.com/jaakkopasanen/AutoEq) database from GitHub.
 
-## Project structure
+## Feedback
 
-```
-manifest.json
-background.js        badge, keyboard shortcuts, sidebar mode, "lower other tabs"
-shared/settings.js   settings model shared by all parts
-content/page.js      audio engine (runs in the page)
-content/content.js   bridge between the page and the extension
-popup/               popup / sidebar UI (popup.js, api.js, i18n.js, popup.css)
-_locales/            extension name and description in six languages
-icons/
-```
+Found a bug or have an idea? [Open an issue](https://github.com/AlexeyKopkin/Audio-Extender/issues). Developers and translators — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Development
+## Support the project
 
-Load the extension: `about:debugging` → *This Firefox* → *Load Temporary Add-on…* → select `manifest.json`.
-
-Or with [web-ext](https://github.com/mozilla/web-ext):
-
-```
-npx web-ext run      # start Firefox with the extension
-npx web-ext lint     # the same checks addons.mozilla.org runs
-```
-
-Design preview without installing: open `popup/popup.html` directly in a browser — it runs on fake data. Tab, theme and language can be set in the URL:
-
-```
-popup.html#eq&theme=cyber&lang=de
-```
-
-## Releases and updates
-
-Firefox updates the extension from addons.mozilla.org automatically. To keep updates smooth:
-
-1. **Version** — bump `version` in `manifest.json` ([SemVer](https://semver.org/)) and describe the changes in [CHANGELOG.md](CHANGELOG.md).
-2. **Settings format** — new fields with a default in `shared/settings.js` need nothing: missing values are filled in from the defaults. If existing data has to change shape, bump `SCHEMA` and add a step to `MIGRATIONS` (same file); the background script runs it on update.
-3. **Page messages** — if the message format between `content/content.js` and `content/page.js` changes, bump `PROTOCOL` in both `shared/settings.js` and `content/page.js`. Tabs still running the old engine then show "Reload the page" instead of misbehaving.
-4. **Check and package** — `npx web-ext lint`, then `npx web-ext build` and upload the zip to AMO.
-
-On install and update the extension injects itself into tabs that are already open, so they work without a reload. Settings, profiles and presets are kept.
-
-## Contributing
-
-Bug reports, ideas and translations are welcome — please open an issue or a pull request.
-
-## Support
-
-The extension is free and ad-free. If it helps you, you can [buy me a coffee](https://buymeacoffee.com/kotx) ☕
+Audio Extender is free and ad-free. If it makes your day a little louder, you can [buy me a coffee](https://buymeacoffee.com/kotx) ☕
 
 ## License
 
