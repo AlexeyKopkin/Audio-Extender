@@ -37,9 +37,9 @@ Free, no ads, no tracking.
 
 ## Install
 
-Audio Extender is coming soon to **Firefox Add-ons** (addons.mozilla.org). Requires Firefox 140 or newer.
+**[Get Audio Extender on Firefox Add-ons →](https://addons.mozilla.org/firefox/addon/audio-extender/)**
 
-Want to try it right now? Download this repository, open `about:debugging` in Firefox → *This Firefox* → *Load Temporary Add-on…* and pick `manifest.json`. (A temporary add-on is removed when Firefox closes.)
+Click *Add to Firefox* on the official Mozilla page — updates then arrive automatically. Requires Firefox 140 or newer.
 
 ## How to use
 
