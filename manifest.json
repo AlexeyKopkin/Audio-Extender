@@ -1,0 +1,86 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "short_name": "Audio Extender",
+  "description": "__MSG_extDescription__",
+  "version": "0.1.0",
+  "default_locale": "en",
+  "author": "Alexey Kopkin",
+  "homepage_url": "https://github.com/AlexeyKopkin/Audio-Extender",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "audio-extender@alexeykopkin",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+
+  "background": {
+    "scripts": ["shared/settings.js", "background.js"]
+  },
+
+  "action": {
+    "default_title": "__MSG_extName__",
+    "default_popup": "popup/popup.html",
+    "default_icon": "icons/icon.svg",
+    "default_area": "navbar"
+  },
+
+  "sidebar_action": {
+    "default_title": "__MSG_extName__",
+    "default_panel": "popup/popup.html?sidebar=1",
+    "default_icon": "icons/icon.svg",
+    "open_at_install": false
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/page.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["shared/settings.js", "content/content.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+A" },
+      "description": "__MSG_cmdOpen__"
+    },
+    "gain-up": {
+      "suggested_key": { "default": "Alt+Shift+Up" },
+      "description": "__MSG_cmdGainUp__"
+    },
+    "gain-down": {
+      "suggested_key": { "default": "Alt+Shift+Down" },
+      "description": "__MSG_cmdGainDown__"
+    },
+    "toggle": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "__MSG_cmdToggle__"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Audio Extender"
+  },
+  "extDescription": {
+    "message": "Amplificateur de volume jusqu’à 600 %, égaliseur paramétrique et effets audio pour chaque onglet."
+  },
+  "cmdOpen": {
+    "message": "Ouvrir Audio Extender"
+  },
+  "cmdGainUp": {
+    "message": "Gain +10 %"
+  },
+  "cmdGainDown": {
+    "message": "Gain −10 %"
+  },
+  "cmdToggle": {
+    "message": "Activer / désactiver le traitement"
+  }
+}
