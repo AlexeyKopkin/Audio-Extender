@@ -96,7 +96,8 @@ browser.tabs.onRemoved.addListener(async (tabId) => {
   await setDuck(tabId, undefined);
   updateDucking();
 });
-browser.windows.onFocusChanged.addListener(() => updateDucking());
+// Firefox for Android has no windows API; a throw here would skip every listener below.
+if (browser.windows) browser.windows.onFocusChanged.addListener(() => updateDucking());
 
 /* ---------- sidebar mode ---------- */
 // Firefox for Android has no sidebar: there the popup must always stay enabled,
@@ -123,7 +124,8 @@ async function editActiveSite(fn) {
   await browser.storage.local.set(AE.storeFor(data, host, s));
 }
 
-browser.commands.onCommand.addListener((name) => {
+// no keyboard shortcuts on Firefox for Android
+if (browser.commands) browser.commands.onCommand.addListener((name) => {
   if (name === 'gain-up') editActiveSite((s) => { s.gain = Math.min(AE.MAX_GAIN, s.gain + GAIN_STEP); s.enabled = true; });
   else if (name === 'gain-down') editActiveSite((s) => { s.gain = Math.max(0, s.gain - GAIN_STEP); s.enabled = true; });
   else if (name === 'toggle') editActiveSite((s) => { s.enabled = !s.enabled; });

@@ -2,8 +2,16 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] — unreleased
 
+Firefox for Android.
+
+- Firefox for Android is supported (142 or newer)
+- Fixed: on Firefox for Android the background script stopped at the missing windows / keyboard-shortcut APIs, so installing, updating and settings changes were not handled
+- Mixer: mute, solo and "mute others" are hidden where the browser can't mute tabs (Firefox for Android) instead of doing nothing
+- Touch: double-tap resets an EQ point or a graphic-EQ slider; EQ hints explain touch gestures; buttons and controls are at least 40 px on phones
+- Phones: meters update less often and the background isn't animated, to save battery
+- The popup finds the current page even when the browser opens it outside the page's window
 - Minimum Firefox version is now 142 (needed for the "no data collection" declaration on all platforms; removes the AMO validation warning)
 
 ## [0.1.1] — unreleased

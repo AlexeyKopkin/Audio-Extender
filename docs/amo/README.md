@@ -17,7 +17,7 @@ Other fields:
 - **Homepage:** `https://github.com/AlexeyKopkin/Audio-Extender`
 - **License:** GNU General Public License v3.0
 - **Privacy policy:** not required — no data is collected (`data_collection_permissions: none`)
-- **Compatibility:** Firefox for desktop
+- **Compatibility:** Firefox for desktop and Firefox for Android (from 0.2.0; the manifest declares both)
 - **Source code submission:** No — the code is plain, unminified JavaScript without a build step
 
 The description uses the Markdown subset AMO supports (bold, lists, inline code, links); paste the content of the ```` ```markdown ```` block as is.

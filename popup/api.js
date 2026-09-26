@@ -43,6 +43,8 @@
     pageKind,
     get hasSidebar() { return !!(browser.sidebarAction && browser.sidebarAction.toggle); },
     get hasShortcuts() { return !!(browser.commands && browser.commands.getAll); },
+    // Firefox for Android can't mute tabs (no `muted` in tabs.update); it also has no windows API.
+    get canMute() { return !!browser.windows; },
 
     async load() { return AE.normalize(await browser.storage.local.get(AE.KEYS)); },
     persist(patch) { return browser.runtime.sendMessage({ type: 'persist', patch }).catch(() => browser.storage.local.set(patch)); },
@@ -55,12 +57,15 @@
 
     async activeTab() {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      return tab || null;
+      if (tab) return tab;
+      // Firefox for Android may open the popup outside the page's window: take the focused web page.
+      const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+      return tabs.find((t) => /^https?:/.test(t.url || '')) || null;
     },
     onActiveTabChanged(cb) {
       browser.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
-        const win = await browser.windows.getCurrent();
-        if (windowId === win.id) cb(await browser.tabs.get(tabId));
+        const win = browser.windows && await browser.windows.getCurrent(); // no windows on Android
+        if (!win || windowId === win.id) cb(await browser.tabs.get(tabId));
       });
       browser.tabs.onUpdated.addListener((tabId, info, tab) => {
         if (tab.active && info.url) cb(tab);
@@ -129,6 +134,7 @@
     mobilePreview,
     hasSidebar: !mobilePreview,
     hasShortcuts: !mobilePreview,
+    canMute: !mobilePreview,
 
     async load() {
       const d = mockRead();

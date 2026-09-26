@@ -40,6 +40,9 @@ Les réglages sont enregistrés pour chaque site et restent après un redémarra
 **🎨 À votre image**
 5 thèmes (Neon, Cyber, Sunset, Aurora, Light), 6 langues, popup ou barre latérale, raccourcis clavier : `Alt+Shift+A` ouvrir, `Alt+Shift+↑/↓` volume, `Alt+Shift+B` activer/désactiver.
 
+**📱 Aussi sur Android**
+Fonctionne aussi dans Firefox pour Android : le même booster, l'égaliseur et les effets, adaptés au doigt. (Barre latérale, raccourcis clavier et coupure du son des onglets uniquement sur ordinateur.)
+
 **🔒 La vie privée avant tout**
 Aucune collecte de données, aucune publicité, aucune analyse. Tout le son est traité localement dans votre navigateur. Seule requête réseau : le téléchargement de la base publique AutoEq lorsque vous cherchez votre casque.
 

@@ -22,6 +22,27 @@
     el.replaceChildren(...[...doc.documentElement.childNodes].map((n) => document.importNode(n, true)));
   }
 
+  // double-click with a mouse, double-tap with a finger (Firefox for Android fires no dblclick).
+  // Items are matched by data-i: the EQ graph re-renders its nodes between the taps.
+  function onDoubleTap(box, selector, fn) {
+    box.addEventListener('dblclick', (e) => {
+      const el = e.target.closest(selector);
+      if (el) fn(el);
+    });
+    let last = { i: null, t: 0 };
+    box.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      const el = e.target.closest(selector);
+      if (!el) return;
+      const now = performance.now();
+      if (last.i === el.dataset.i && now - last.t < 350) {
+        last = { i: null, t: 0 };
+        e.stopPropagation(); // no drag / slider jump to the finger on the second tap
+        fn(el);
+      } else last = { i: el.dataset.i, t: now };
+    }, { capture: true });
+  }
+
   // per-viewer UI conveniences (last open tab)
   const ui = {
     get(k, d) { try { const v = localStorage.getItem('ae:ui:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -53,10 +74,14 @@
 
   if (!API.isExtension) root.classList.add('preview');
   // Firefox for Android opens the popup as a full-screen page: fit the screen instead of 480×600.
-  if (/Android/i.test(navigator.userAgent) || API.mobilePreview) root.classList.add('mobile');
-  // hide what this Firefox doesn't have (Android: no sidebar, no keyboard shortcuts)
+  const MOBILE = /Android/i.test(navigator.userAgent) || API.mobilePreview;
+  if (MOBILE) root.classList.add('mobile');
+  // finger instead of mouse: no wheel, no hover; hints and double-tap adapt
+  const TOUCH = MOBILE || matchMedia('(pointer: coarse)').matches;
+  // hide what this Firefox doesn't have (Android: no sidebar, no keyboard shortcuts, no tab muting)
   $('#row-sidebar').classList.toggle('hidden', !API.hasSidebar);
   $('#card-hotkeys').classList.toggle('hidden', !API.hasShortcuts);
+  $('#mute-others').classList.toggle('hidden', !API.canMute);
   if (API.context === 'sidebar') root.classList.add('sidebar');
   if (API.context === 'tab') root.classList.add('page');
 
@@ -662,9 +687,7 @@
     const endDrag = () => { if (drag !== null) { drag = null; render(); } };
     svg.addEventListener('pointerup', endDrag);
     svg.addEventListener('pointercancel', endDrag);
-    svg.addEventListener('dblclick', (e) => {
-      const node = e.target.closest('.node');
-      if (!node) return;
+    onDoubleTap(svg, '.node', (node) => {
       E().bands[+node.dataset.i].g = 0;
       syncEditor(); render(); edited();
     });
@@ -815,9 +838,7 @@
     });
     $('#geq').addEventListener('pointermove', (e) => { if (vsDrag) moveVs(e); });
     $('#geq').addEventListener('pointerup', () => { vsDrag = null; });
-    $('#geq').addEventListener('dblclick', (e) => {
-      const el = e.target.closest('.vs');
-      if (!el) return;
+    onDoubleTap($('#geq'), '.vs', (el) => {
       E()[E().mode][+el.dataset.i] = 0;
       paintVs(el, 0); render(); edited();
     });
@@ -844,7 +865,7 @@
       if (!silent) commit();
     }
     function updateHint() {
-      $('#graph-hint').textContent = tr(E().mode === 'param' ? 'eq.hintParam' : 'eq.hintGraphic');
+      $('#graph-hint').textContent = tr((E().mode === 'param' ? 'eq.hintParam' : 'eq.hintGraphic') + (TOUCH ? 'Touch' : ''));
     }
     $$('#eq-mode button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
@@ -1020,10 +1041,10 @@
             <div class="mix-controls"><input type="range" min="0" max="${AE.MAX_GAIN}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
             <div class="mini-meter"><i></i></div>
           </div>
-          <div class="mix-btns">
+          ${API.canMute ? `<div class="mix-btns">
             <button class="mb mute" title="${esc(tr(muted ? 'mixer.unmute' : 'mixer.mute'))}"><svg class="ic"><use href="#i-volume${muted ? '-x' : ''}"/></svg></button>
             <button class="mb solo${soloMuted.length && !muted && t.audible ? ' active' : ''}" title="${esc(tr('mixer.solo'))}">S</button>
-          </div>
+          </div>` : ''}
         </div>`;
       }).join(''));
       $$('.mix-item input[type=range]', list).forEach(paintRange);
@@ -1097,7 +1118,7 @@
       else {
         const e = mixLinks.get(id);
         if (e) {
-          if (t - e.pollT > 120) { e.pollT = t; e.link.post({ type: 'poll', want: ['levels'] }); }
+          if (t - e.pollT > (MOBILE ? 250 : 120)) { e.pollT = t; e.link.post({ type: 'poll', want: ['levels'] }); }
           if (t - e.t < 500) lv = e.lv;
         }
       }
@@ -1266,7 +1287,8 @@
   function frame(t) {
     const eqVisible = currentPanel === 'eq';
     const fast = currentPanel === 'booster' || eqVisible || currentPanel === 'mixer';
-    if (link && t - lastPoll > (fast ? 45 : 400)) {
+    // phones: ~10 polls per second instead of ~22 to save battery
+    if (link && t - lastPoll > (fast ? (MOBILE ? 100 : 45) : 400)) {
       lastPoll = t;
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }

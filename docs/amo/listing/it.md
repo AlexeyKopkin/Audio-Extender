@@ -40,6 +40,9 @@ Le impostazioni vengono salvate per ogni sito e restano dopo il riavvio del brow
 **🎨 Su misura per te**
 5 temi (Neon, Cyber, Sunset, Aurora, Light), 6 lingue, popup o barra laterale, scorciatoie da tastiera: `Alt+Shift+A` apri, `Alt+Shift+↑/↓` volume, `Alt+Shift+B` on/off.
 
+**📱 Anche su Android**
+Funziona anche in Firefox per Android: stesso booster, equalizzatore ed effetti, comodi da usare con le dita. (Barra laterale, scorciatoie da tastiera e silenziamento delle schede solo su computer.)
+
 **🔒 Privacy prima di tutto**
 Nessuna raccolta di dati, nessuna pubblicità, nessuna analisi. Tutto l’audio viene elaborato localmente nel tuo browser. L’unica richiesta di rete: il download del database pubblico AutoEq quando cerchi le tue cuffie.
 
