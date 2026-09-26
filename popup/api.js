@@ -108,9 +108,9 @@
      Mock for the design preview (popup.html opened as a file)
      --------------------------------------------------------- */
   const MOCK_TABS = [
-    { id: 1, active: true, audible: true, title: 'Lo-fi hip hop radio — beats to relax/study to', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', mutedInfo: { muted: false } },
+    { id: 1, active: true, audible: true, title: 'Lo-fi beats to relax and study', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', mutedInfo: { muted: false } },
     { id: 2, audible: true, title: 'Just Chatting — live stream', url: 'https://www.twitch.tv/somechannel', mutedInfo: { muted: false } },
-    { id: 3, audible: true, title: 'Daft Punk — Harder, Better, Faster, Stronger', url: 'https://open.spotify.com/track/1', mutedInfo: { muted: false } },
+    { id: 3, audible: true, title: 'Synthwave Mix — Neon Nights', url: 'https://bandcamp.com/', mutedInfo: { muted: false } },
     { id: 4, audible: false, title: 'Deep House Mix 2026', url: 'https://soundcloud.com/mix', mutedInfo: { muted: true } },
     { id: 5, audible: false, title: 'Inbox', url: 'https://mail.example.com/', mutedInfo: { muted: false } },
   ];
@@ -128,7 +128,23 @@
       const d = mockRead();
       if (!d.app) {
         d.app = { ...AE.DEFAULT_APP };
-        d.sites = { 'youtube.com': AE.merge(AE.DEFAULT_AUDIO, { gain: 250, fx: { dialog: { on: true }, bass: { on: true } } }) };
+        d.sites = {
+          'youtube.com': AE.merge(AE.DEFAULT_AUDIO, {
+            gain: 250,
+            eq: {
+              preset: 'custom',
+              bands: [
+                { type: 'highpass', f: 28, g: 0, q: 0.71 },
+                { type: 'lowshelf', f: 95, g: 4.5, q: 0.7 },
+                { type: 'peaking', f: 320, g: -2.5, q: 1.2 },
+                { type: 'peaking', f: 2400, g: 3, q: 1.4 },
+                { type: 'peaking', f: 6500, g: -3.5, q: 3 },
+                { type: 'highshelf', f: 11000, g: 2.5, q: 0.7 },
+              ],
+            },
+            fx: { dialog: { on: true }, bass: { on: true }, width: { on: true } },
+          }),
+        };
       }
       return AE.normalize(d);
     },
@@ -171,7 +187,7 @@
           }
           const lim = settings && settings.limiter.on;
           const reply = {
-            type: 'reply', frame: 'mock', top: true, sources: playing ? 2 : 0, blocked: 0, active: true,
+            type: 'reply', frame: 'mock', top: true, v: AE.PROTOCOL, sources: playing ? 2 : 0, blocked: 0, active: true,
             levels: {
               l: { peak: lim ? Math.min(lv.l, 0.97) : lv.l, rms: lv.l * 0.5 },
               r: { peak: lim ? Math.min(lv.r, 0.97) : lv.r, rms: lv.r * 0.5 },
