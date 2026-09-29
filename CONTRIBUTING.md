@@ -16,46 +16,71 @@ AutoEq → EQ → bass → dialogue → night mode → stereo (width / mono / ba
 
 ## Project structure
 
+One shared core and one small folder per browser — the same layout large cross-browser extensions use.
+
 ```
-manifest.json
-background.js        badge, keyboard shortcuts, sidebar mode, "lower other tabs", install / update
-shared/settings.js   settings model shared by all parts (defaults, per-site logic, schema version)
-content/page.js      audio engine (runs in the page)
-content/content.js   bridge between the page and the extension
-popup/               popup / sidebar UI (popup.js, api.js, i18n.js, popup.css)
-_locales/            extension name and description in six languages
-icons/
-docs/screenshots/    images used in the README
+src/                     shared by all browsers
+  background.js          badge, keyboard shortcuts, sidebar mode, "lower other tabs", install / update
+  shared/settings.js     settings model (defaults, per-site logic, schema version)
+  content/chain.js       processing chain (one per AudioContext)
+  content/page.js        audio engine (runs in the page)
+  content/content.js     bridge between the page and the extension
+  popup/                 popup / sidebar UI (popup.js, api.js, i18n.js, popup.css)
+  popup/preview.js       demo data for the design preview (not in the store packages)
+  _locales/              extension name and description in six languages
+platform/firefox/        Firefox: manifest.json, platform.js, SVG icon
+platform/chrome/         Chrome and Edge: manifest.json, platform.js, service worker entry, PNG icons
+scripts/                 build and package check
+dist/                    build output (not in git)
+docs/screenshots/        images used in the README
 ```
+
+Rules that keep the browsers from breaking each other:
+
+- **Everything that differs between browsers lives in `platform/<browser>/platform.js`** behind the same `PLATFORM` interface: browser name, store link, sites where extensions can't run, how the sidebar opens, and the UI texts that name the browser. The core asks `PLATFORM`; it never checks which browser it is running in.
+- **The core uses feature detection** for things that differ inside one browser family (for example Firefox for Android has no tab muting or keyboard shortcuts).
+- **A platform folder never contains a core file.** The build stops if `platform/<browser>/` has a file with the same path as one in `src/`.
+- **Each browser has its own version** in its `manifest.json`. A change only in `platform/chrome/` leaves the Firefox package byte-for-byte the same, so Firefox needs no new release.
 
 ## Development
 
-Load the extension: `about:debugging` → *This Firefox* → *Load Temporary Add-on…* → select `manifest.json`.
+```
+npm run build            # all targets
+npm run build:firefox    # → dist/firefox/  + web-ext-artifacts/audio_extender-firefox-<version>.zip
+npm run build:chrome     # → dist/chrome/   + web-ext-artifacts/audio_extender-chrome-<version>.zip (Chrome and Edge)
+npm run build:preview    # → dist/preview/  design preview with demo data
+npm run lint:firefox     # build, then the same checks addons.mozilla.org runs
+npm run run:firefox      # build, then start Firefox with the extension
+```
 
-Or with [web-ext](https://github.com/mozilla/web-ext):
+On Windows the same with a double click: `build-firefox.cmd` (build + lint) and `build-chrome.cmd` in the repository root (`/q` skips the pause at the end).
+
+The build copies `src/` and the platform folder unchanged — no bundler, no minification — and checks the package (every referenced file exists, translations are complete, no Firefox-only keys in the Chrome manifest).
+
+Load a build:
+
+- **Firefox:** `about:debugging` → *This Firefox* → *Load Temporary Add-on…* → `dist/firefox/manifest.json`
+- **Chrome / Edge:** `chrome://extensions` (or `edge://extensions`) → *Developer mode* → *Load unpacked* → `dist/chrome`
+
+### Design preview
+
+Without installing: `npm run build:preview`, then open `dist/preview/popup/popup.html` in a browser — it runs on demo data. Tab, theme, language and the phone layout can be set in the URL:
 
 ```
-npx web-ext run      # start Firefox with the extension
-npx web-ext lint     # the same checks addons.mozilla.org runs
-```
-
-Design preview without installing: open `popup/popup.html` directly in a browser — it runs on demo data. Tab, theme and language can be set in the URL:
-
-```
-popup.html#eq&theme=cyber&lang=de
+popup.html#eq&theme=cyber&lang=de&mobile
 ```
 
 ## Translations
 
-UI texts live in `popup/i18n.js` (one block per language), the extension name and description in `_locales/<lang>/messages.json`. To add a language, add a block with the same keys and an entry in `LANGS`.
+UI texts live in `src/popup/i18n.js` (one block per language); texts that name the browser live in `platform/<browser>/platform.js`; the extension name and description in `src/_locales/<lang>/messages.json`. To add a language, add a block with the same keys and an entry in `LANGS`.
 
 ## Releases and updates
 
 Firefox updates the extension from addons.mozilla.org automatically. To keep updates smooth:
 
-1. **Version** — bump `version` in `manifest.json` ([SemVer](https://semver.org/)) and describe the changes in [CHANGELOG.md](CHANGELOG.md).
-2. **Settings format** — new fields with a default in `shared/settings.js` need nothing: missing values are filled in from the defaults. If existing data has to change shape, bump `SCHEMA` and add a step to `MIGRATIONS` (same file); the background script runs it on update.
-3. **Page messages** — if the message format between `content/content.js` and `content/page.js` changes, bump `PROTOCOL` in both `shared/settings.js` and `content/page.js`. Tabs still running the old engine then show "Reload the page" instead of misbehaving.
-4. **Check and package** — `npx web-ext lint`, then `npx web-ext build` and upload the zip to AMO.
+1. **Version** — bump `version` in `platform/<browser>/manifest.json` of each browser that gets a release ([SemVer](https://semver.org/)) and describe the changes in [CHANGELOG.md](CHANGELOG.md).
+2. **Settings format** — new fields with a default in `src/shared/settings.js` need nothing: missing values are filled in from the defaults. If existing data has to change shape, bump `SCHEMA` and add a step to `MIGRATIONS` (`src/shared/settings.js`); the background script runs it on update.
+3. **Page messages** — if the message format between `content/content.js` and `content/page.js` changes, bump `PROTOCOL` in both `src/shared/settings.js` and `src/content/page.js`. Tabs still running the old engine then show "Reload the page" instead of misbehaving.
+4. **Check and package** — Firefox: `npm run lint:firefox`, then upload `audio_extender-firefox-<version>.zip` to AMO. Chrome / Edge: `npm run build:chrome` and upload `audio_extender-chrome-<version>.zip` to the Chrome Web Store and Edge Add-ons.
 
 On install and update the extension injects itself into tabs that are already open, so they work without a reload. Settings, profiles and presets are kept.

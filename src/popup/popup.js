@@ -1242,6 +1242,9 @@
   });
 
   $('#version').textContent = API.version();
+  // the add-on's page in this browser's store (hidden until the listing exists)
+  if (PLATFORM.storeUrl) $('#rate-link').href = PLATFORM.storeUrl;
+  else $('#rate-link').classList.add('hidden');
 
   /* ---------------------------------------------------------
      Render everything / reload from storage
