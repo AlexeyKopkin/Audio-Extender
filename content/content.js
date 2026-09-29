@@ -17,7 +17,7 @@
   let settings = null;
   let duck = 1;
   let lastReply = null;
-  let lastStatus = { sources: 0, blocked: 0, active: false };
+  let lastStatus = { sources: 0, blocked: 0, playing: 0, active: false };
   const ports = new Set();
   const frameKey = Math.random().toString(36).slice(2);
 
@@ -65,7 +65,7 @@
         lastReply = null;
         toPage({ type: 'poll', want: msg.want || [] });   // answered synchronously
         const r = lastReply || lastStatus;
-        if (r.sources || r.blocked || r.active || window === window.top) {
+        if (r.sources || r.blocked || r.playing || r.active || window === window.top) {
           port.postMessage({ type: 'reply', frame: frameKey, top: window === window.top, ...r });
         }
       }
