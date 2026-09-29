@@ -18,17 +18,17 @@ Other fields:
 - **License:** GNU General Public License v3.0
 - **Privacy policy:** not required — no data is collected (`data_collection_permissions: none`)
 - **Compatibility:** Firefox for desktop and Firefox for Android (from 0.2.0; the manifest declares both)
-- **Source code submission:** No — the code is plain, unminified JavaScript without a build step
+- **Source code submission:** No — plain, unminified JavaScript; the build only copies files unchanged from `src/` and `platform/firefox/` (no bundler, minifier or transpiler)
 
 The description uses the Markdown subset AMO supports (bold, lists, inline code, links); paste the content of the ```` ```markdown ```` block as is.
 
 ## Notes to reviewer
 
 ```
-Plain, unminified JavaScript — no build step, no bundler, no remote code.
+Plain, unminified JavaScript — no bundler, no minification, no remote code. The package files are the source files as they are.
 
-content/page.js runs in the page's MAIN world: it routes <audio>/<video> elements and the page's own
-AudioContexts through a Web Audio processing chain (EQ, effects, gain, limiter). It talks to
+content/chain.js and content/page.js run in the page's MAIN world: page.js routes <audio>/<video> elements and the page's own
+AudioContexts through the Web Audio processing chain from chain.js (EQ, effects, gain, limiter). It talks to
 content/content.js only through CustomEvents carrying JSON strings.
 
 Network: the only request is an optional download of the public AutoEq headphone database (MIT)

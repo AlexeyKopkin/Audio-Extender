@@ -125,7 +125,6 @@
       'set.hk.up': 'Gain +10%',
       'set.hk.down': 'Gain −10%',
       'set.hk.toggle': 'Toggle processing',
-      'set.hk.note': 'Change: about:addons → ⚙ → Manage Extension Shortcuts',
       'set.data': 'Data',
       'set.export': 'Export',
       'set.import': 'Import',
@@ -133,13 +132,11 @@
       'set.support': 'Support the project',
       'set.supportDesc': 'The extension is free and ad-free. If it helps you, you can buy the developer a coffee.',
       'set.crypto': 'Crypto',
-      'set.rate': 'Rate on addons.mozilla.org',
       'set.report': 'Report a bug',
 
       'app.noAudio': 'no audio yet',
       'app.playing': 'audio playing',
       'app.unavailable': 'Not available on this page',
-      'app.unavailableDesc': 'Firefox doesn’t let extensions work on internal pages (about:, settings, addons.mozilla.org, reader view).',
       'app.noAccess': 'No access to websites',
       'app.noAccessDesc': 'Audio Extender isn’t allowed to access this site, so it can’t process its sound.',
       'app.grant': 'Allow',
@@ -164,8 +161,6 @@
       'set.importError': 'This file is not an Audio Extender backup',
       'set.hk.none': 'Not set',
       'app.allowSite': 'Allow on this site',
-      'app.restrictedSite': 'Firefox blocks extensions here',
-      'app.restrictedSiteDesc': 'This page is protected by Firefox (for example the PDF viewer or a site restricted for security reasons). Its audio plays without processing.',
       'app.updatedDesc': 'Audio Extender was updated. Reload the page to use the new version here.',
     },
 
@@ -276,7 +271,6 @@
       'set.hk.up': 'Усиление +10%',
       'set.hk.down': 'Усиление −10%',
       'set.hk.toggle': 'Вкл / выкл обработку',
-      'set.hk.note': 'Изменить: about:addons → ⚙ → Управление сочетаниями клавиш',
       'set.data': 'Данные',
       'set.export': 'Экспорт',
       'set.import': 'Импорт',
@@ -284,13 +278,11 @@
       'set.support': 'Поддержать проект',
       'set.supportDesc': 'Расширение бесплатное и без рекламы. Если оно вам помогает — можно угостить разработчика кофе.',
       'set.crypto': 'Крипто',
-      'set.rate': 'Оценить на addons.mozilla.org',
       'set.report': 'Сообщить об ошибке',
 
       'app.noAudio': 'звука пока нет',
       'app.playing': 'звук играет',
       'app.unavailable': 'Недоступно на этой странице',
-      'app.unavailableDesc': 'Firefox не разрешает расширениям работать на служебных страницах (about:, настройки, addons.mozilla.org, режим чтения).',
       'app.noAccess': 'Нет доступа к сайтам',
       'app.noAccessDesc': 'У Audio Extender нет доступа к этому сайту, поэтому он не может обработать его звук.',
       'app.grant': 'Разрешить',
@@ -315,8 +307,6 @@
       'set.importError': 'Этот файл не является резервной копией Audio Extender',
       'set.hk.none': 'Не задано',
       'app.allowSite': 'Разрешить на этом сайте',
-      'app.restrictedSite': 'Firefox запрещает здесь расширения',
-      'app.restrictedSiteDesc': 'Эта страница защищена Firefox (например, просмотр PDF или сайт с ограничениями безопасности). Звук здесь играет без обработки.',
       'app.updatedDesc': 'Audio Extender обновился. Перезагрузите страницу, чтобы здесь заработала новая версия.',
     },
 
@@ -427,7 +417,6 @@
       'set.hk.up': 'Підсилення +10%',
       'set.hk.down': 'Підсилення −10%',
       'set.hk.toggle': 'Увімк / вимк обробку',
-      'set.hk.note': 'Змінити: about:addons → ⚙ → Керування комбінаціями клавіш',
       'set.data': 'Дані',
       'set.export': 'Експорт',
       'set.import': 'Імпорт',
@@ -435,13 +424,11 @@
       'set.support': 'Підтримати проєкт',
       'set.supportDesc': 'Розширення безкоштовне й без реклами. Якщо воно вам допомагає — можна пригостити розробника кавою.',
       'set.crypto': 'Крипто',
-      'set.rate': 'Оцінити на addons.mozilla.org',
       'set.report': 'Повідомити про помилку',
 
       'app.noAudio': 'звуку поки немає',
       'app.playing': 'звук грає',
       'app.unavailable': 'Недоступно на цій сторінці',
-      'app.unavailableDesc': 'Firefox не дозволяє розширенням працювати на службових сторінках (about:, налаштування, addons.mozilla.org, режим читання).',
       'app.noAccess': 'Немає доступу до сайтів',
       'app.noAccessDesc': 'Audio Extender не має доступу до цього сайту, тому не може обробити його звук.',
       'app.grant': 'Дозволити',
@@ -466,8 +453,6 @@
       'set.importError': 'Цей файл не є резервною копією Audio Extender',
       'set.hk.none': 'Не задано',
       'app.allowSite': 'Дозволити на цьому сайті',
-      'app.restrictedSite': 'Firefox забороняє тут розширення',
-      'app.restrictedSiteDesc': 'Ця сторінка захищена Firefox (наприклад, перегляд PDF або сайт з обмеженнями безпеки). Звук тут грає без обробки.',
       'app.updatedDesc': 'Audio Extender оновився. Перезавантажте сторінку, щоб тут запрацювала нова версія.',
     },
 
@@ -578,7 +563,6 @@
       'set.hk.up': 'Verstärkung +10%',
       'set.hk.down': 'Verstärkung −10%',
       'set.hk.toggle': 'Verarbeitung ein / aus',
-      'set.hk.note': 'Ändern: about:addons → ⚙ → Tastenkombinationen für Erweiterungen verwalten',
       'set.data': 'Daten',
       'set.export': 'Export',
       'set.import': 'Import',
@@ -586,13 +570,11 @@
       'set.support': 'Projekt unterstützen',
       'set.supportDesc': 'Die Erweiterung ist kostenlos und werbefrei. Wenn sie dir hilft, kannst du dem Entwickler einen Kaffee spendieren.',
       'set.crypto': 'Krypto',
-      'set.rate': 'Auf addons.mozilla.org bewerten',
       'set.report': 'Fehler melden',
 
       'app.noAudio': 'noch kein Ton',
       'app.playing': 'Ton läuft',
       'app.unavailable': 'Auf dieser Seite nicht verfügbar',
-      'app.unavailableDesc': 'Firefox erlaubt Erweiterungen nicht auf internen Seiten (about:, Einstellungen, addons.mozilla.org, Leseansicht).',
       'app.noAccess': 'Kein Zugriff auf Websites',
       'app.noAccessDesc': 'Audio Extender hat keinen Zugriff auf diese Website und kann ihren Ton daher nicht verarbeiten.',
       'app.grant': 'Erlauben',
@@ -617,8 +599,6 @@
       'set.importError': 'Diese Datei ist keine Audio-Extender-Sicherung',
       'set.hk.none': 'Nicht festgelegt',
       'app.allowSite': 'Auf dieser Website erlauben',
-      'app.restrictedSite': 'Firefox sperrt hier Erweiterungen',
-      'app.restrictedSiteDesc': 'Diese Seite ist von Firefox geschützt (z. B. der PDF-Betrachter oder eine aus Sicherheitsgründen eingeschränkte Website). Der Ton wird unverarbeitet abgespielt.',
       'app.updatedDesc': 'Audio Extender wurde aktualisiert. Lade die Seite neu, um hier die neue Version zu nutzen.',
     },
 
@@ -729,7 +709,6 @@
       'set.hk.up': 'Guadagno +10%',
       'set.hk.down': 'Guadagno −10%',
       'set.hk.toggle': 'Attiva / disattiva',
-      'set.hk.note': 'Modifica: about:addons → ⚙ → Gestisci scorciatoie estensioni',
       'set.data': 'Dati',
       'set.export': 'Esporta',
       'set.import': 'Importa',
@@ -737,13 +716,11 @@
       'set.support': 'Sostieni il progetto',
       'set.supportDesc': 'L’estensione è gratuita e senza pubblicità. Se ti è utile, puoi offrire un caffè allo sviluppatore.',
       'set.crypto': 'Cripto',
-      'set.rate': 'Valuta su addons.mozilla.org',
       'set.report': 'Segnala un bug',
 
       'app.noAudio': 'ancora nessun audio',
       'app.playing': 'audio in riproduzione',
       'app.unavailable': 'Non disponibile in questa pagina',
-      'app.unavailableDesc': 'Firefox non consente alle estensioni di funzionare nelle pagine interne (about:, impostazioni, addons.mozilla.org, vista lettura).',
       'app.noAccess': 'Nessun accesso ai siti',
       'app.noAccessDesc': 'Audio Extender non ha accesso a questo sito, quindi non può elaborarne l’audio.',
       'app.grant': 'Consenti',
@@ -768,8 +745,6 @@
       'set.importError': 'Questo file non è un backup di Audio Extender',
       'set.hk.none': 'Non impostata',
       'app.allowSite': 'Consenti su questo sito',
-      'app.restrictedSite': 'Firefox blocca le estensioni qui',
-      'app.restrictedSiteDesc': 'Questa pagina è protetta da Firefox (ad esempio il visualizzatore PDF o un sito limitato per motivi di sicurezza). L’audio viene riprodotto senza elaborazione.',
       'app.updatedDesc': 'Audio Extender è stato aggiornato. Ricarica la pagina per usare qui la nuova versione.',
     },
 
@@ -880,7 +855,6 @@
       'set.hk.up': 'Gain +10%',
       'set.hk.down': 'Gain −10%',
       'set.hk.toggle': 'Activer / désactiver',
-      'set.hk.note': 'Modifier : about:addons → ⚙ → Gérer les raccourcis d’extensions',
       'set.data': 'Données',
       'set.export': 'Exporter',
       'set.import': 'Importer',
@@ -888,13 +862,11 @@
       'set.support': 'Soutenir le projet',
       'set.supportDesc': 'L’extension est gratuite et sans publicité. Si elle vous aide, vous pouvez offrir un café au développeur.',
       'set.crypto': 'Crypto',
-      'set.rate': 'Noter sur addons.mozilla.org',
       'set.report': 'Signaler un bug',
 
       'app.noAudio': 'pas encore de son',
       'app.playing': 'son en cours',
       'app.unavailable': 'Indisponible sur cette page',
-      'app.unavailableDesc': 'Firefox n’autorise pas les extensions sur les pages internes (about:, paramètres, addons.mozilla.org, mode lecture).',
       'app.noAccess': 'Aucun accès aux sites',
       'app.noAccessDesc': 'Audio Extender n’a pas accès à ce site et ne peut donc pas traiter son son.',
       'app.grant': 'Autoriser',
@@ -919,13 +891,15 @@
       'set.importError': 'Ce fichier n’est pas une sauvegarde d’Audio Extender',
       'set.hk.none': 'Non défini',
       'app.allowSite': 'Autoriser sur ce site',
-      'app.restrictedSite': 'Firefox bloque les extensions ici',
-      'app.restrictedSiteDesc': 'Cette page est protégée par Firefox (par exemple la visionneuse PDF ou un site restreint pour des raisons de sécurité). Le son est lu sans traitement.',
       'app.updatedDesc': 'Audio Extender a été mis à jour. Rechargez la page pour utiliser ici la nouvelle version.',
     },
   };
 
   let lang = DEFAULT;
+
+  // texts that name the browser (its pages, its store) come from the platform layer
+  const P = typeof PLATFORM !== 'undefined' ? PLATFORM.strings : null;
+  if (P) for (const code of Object.keys(DICT)) Object.assign(DICT[code], P[code] || P[DEFAULT] || {});
 
   function t(key, vars) {
     let v = DICT[lang][key] ?? DICT[DEFAULT][key] ?? key;

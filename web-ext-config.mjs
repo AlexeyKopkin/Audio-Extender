@@ -1,13 +1,6 @@
-// Settings for `npx web-ext` — files that belong to the repository but not to the extension package.
+// Settings for `npx web-ext` (lint, run). The Firefox package is built into dist/firefox first:
+//   npm run build:firefox && npx web-ext lint
 export default {
-  ignoreFiles: [
-    'docs',
-    'README.md',
-    'CONTRIBUTING.md',
-    'CHANGELOG.md',
-    'web-ext-config.mjs',
-    '.gitattributes',
-    '.gitignore',
-    '**/*.bkp',
-  ],
+  sourceDir: './dist/firefox',
+  artifactsDir: './web-ext-artifacts',
 };

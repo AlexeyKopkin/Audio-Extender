@@ -2,6 +2,13 @@
    Audio Extender — settings model shared by background,
    content scripts and the popup.
    ========================================================= */
+
+// Chrome / Edge expose the same promise-based API as `chrome` only.
+// Loaded first in every extension context, so the rest of the code can use `browser`.
+if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'undefined' && globalThis.chrome.runtime && globalThis.chrome.runtime.id) {
+  globalThis.browser = globalThis.chrome;
+}
+
 (function (global) {
   'use strict';
 

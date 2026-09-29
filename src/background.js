@@ -12,10 +12,9 @@
    ========================================================= */
 'use strict';
 
-const POPUP = 'popup/popup.html';
 const DUCK_FACTOR = 0.3;
 const GAIN_STEP = 10;
-const SCRIPTS_MAIN = ['content/page.js'];
+const SCRIPTS_MAIN = ['content/chain.js', 'content/page.js'];
 const SCRIPTS_ISOLATED = ['shared/settings.js', 'content/content.js'];
 
 let data = AE.normalize({});
@@ -44,7 +43,7 @@ async function injectAll() {
 }
 
 /* ---------- messages ---------- */
-browser.runtime.onMessage.addListener((msg, sender) => {
+function handleMessage(msg, sender) {
   if (!msg) return undefined;
   if (msg.type === 'hello') {
     const tabId = sender.tab && sender.tab.id;
@@ -58,6 +57,13 @@ browser.runtime.onMessage.addListener((msg, sender) => {
   }
   if (msg.type === 'inject' && typeof msg.tabId === 'number') return injectTab(msg.tabId);
   return undefined;
+}
+// sendResponse + `return true` instead of returning a Promise: works the same in Firefox and Chrome.
+browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  const reply = handleMessage(msg, sender);
+  if (!reply) return false;
+  reply.then((value) => sendResponse(value), () => sendResponse(undefined));
+  return true;
 });
 
 /* ---------- badge ---------- */
@@ -100,18 +106,13 @@ browser.tabs.onRemoved.addListener(async (tabId) => {
 if (browser.windows) browser.windows.onFocusChanged.addListener(() => updateDucking());
 
 /* ---------- sidebar mode ---------- */
-// Firefox for Android has no sidebar: there the popup must always stay enabled,
-// otherwise the toolbar button would do nothing.
-const HAS_SIDEBAR = !!(browser.sidebarAction && browser.sidebarAction.toggle);
-
+// How the toolbar button opens the sidebar differs per browser (platform layer);
+// where there is no sidebar the popup always stays enabled.
 async function applySidebarMode() {
   await ready;
-  await browser.action.setPopup({ popup: HAS_SIDEBAR && data.app.sidebar ? '' : POPUP });
+  await PLATFORM.sidebar.apply(!!data.app.sidebar);
 }
-browser.action.onClicked.addListener(() => {
-  // Only fires when the popup is disabled, i.e. in sidebar mode.
-  if (HAS_SIDEBAR) browser.sidebarAction.toggle();
-});
+browser.action.onClicked.addListener(() => PLATFORM.sidebar.onActionClicked());
 
 /* ---------- keyboard shortcuts ---------- */
 async function editActiveSite(fn) {

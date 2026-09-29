@@ -1,0 +1,15 @@
+{
+  "name": "audio-extender",
+  "private": true,
+  "description": "Build scripts for Audio Extender: shared core in src/, one folder per browser in platform/.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:firefox": "node scripts/build.mjs firefox",
+    "build:chrome": "node scripts/build.mjs chrome",
+    "build:preview": "node scripts/build.mjs preview",
+    "lint:firefox": "node scripts/build.mjs firefox && web-ext lint",
+    "run:firefox": "node scripts/build.mjs firefox && web-ext run"
+  }
+}
