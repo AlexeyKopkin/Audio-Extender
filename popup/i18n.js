@@ -137,6 +137,7 @@
       'set.report': 'Report a bug',
 
       'app.noAudio': 'no audio yet',
+      'app.playing': 'audio playing',
       'app.unavailable': 'Not available on this page',
       'app.unavailableDesc': 'Firefox doesn’t let extensions work on internal pages (about:, settings, addons.mozilla.org, reader view).',
       'app.noAccess': 'No access to websites',
@@ -287,6 +288,7 @@
       'set.report': 'Сообщить об ошибке',
 
       'app.noAudio': 'звука пока нет',
+      'app.playing': 'звук играет',
       'app.unavailable': 'Недоступно на этой странице',
       'app.unavailableDesc': 'Firefox не разрешает расширениям работать на служебных страницах (about:, настройки, addons.mozilla.org, режим чтения).',
       'app.noAccess': 'Нет доступа к сайтам',
@@ -437,6 +439,7 @@
       'set.report': 'Повідомити про помилку',
 
       'app.noAudio': 'звуку поки немає',
+      'app.playing': 'звук грає',
       'app.unavailable': 'Недоступно на цій сторінці',
       'app.unavailableDesc': 'Firefox не дозволяє розширенням працювати на службових сторінках (about:, налаштування, addons.mozilla.org, режим читання).',
       'app.noAccess': 'Немає доступу до сайтів',
@@ -587,6 +590,7 @@
       'set.report': 'Fehler melden',
 
       'app.noAudio': 'noch kein Ton',
+      'app.playing': 'Ton läuft',
       'app.unavailable': 'Auf dieser Seite nicht verfügbar',
       'app.unavailableDesc': 'Firefox erlaubt Erweiterungen nicht auf internen Seiten (about:, Einstellungen, addons.mozilla.org, Leseansicht).',
       'app.noAccess': 'Kein Zugriff auf Websites',
@@ -737,6 +741,7 @@
       'set.report': 'Segnala un bug',
 
       'app.noAudio': 'ancora nessun audio',
+      'app.playing': 'audio in riproduzione',
       'app.unavailable': 'Non disponibile in questa pagina',
       'app.unavailableDesc': 'Firefox non consente alle estensioni di funzionare nelle pagine interne (about:, impostazioni, addons.mozilla.org, vista lettura).',
       'app.noAccess': 'Nessun accesso ai siti',
@@ -887,6 +892,7 @@
       'set.report': 'Signaler un bug',
 
       'app.noAudio': 'pas encore de son',
+      'app.playing': 'son en cours',
       'app.unavailable': 'Indisponible sur cette page',
       'app.unavailableDesc': 'Firefox n’autorise pas les extensions sur les pages internes (about:, paramètres, addons.mozilla.org, mode lecture).',
       'app.noAccess': 'Aucun accès aux sites',

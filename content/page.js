@@ -38,7 +38,8 @@
   const chains = new Map();          // AudioContext -> Chain
   const media = new Set();           // media elements seen on the page
   const hooked = new WeakMap();      // element -> MediaElementAudioSourceNode
-  const blocked = new WeakSet();     // elements we must not touch (would go silent)
+  const blocked = new WeakSet();     // elements we must never touch: DRM, or captured by the page itself
+  const foreign = new WeakSet();     // current source is cross-origin without CORS — re-checked when the source changes
   let speedApplied = false;
 
   /* ---------------------------------------------------------
@@ -330,6 +331,8 @@
     media.add(el);
     applySpeed(el);
     el.addEventListener('loadedmetadata', () => applySpeed(el));
+    // Players often start with a cross-origin URL and then switch the same element to blob: (MSE/HLS).
+    el.addEventListener('loadstart', () => { if (foreign.delete(el)) report(); });
   }
 
   /** createMediaElementSource outputs silence for DRM media and for cross-origin media without CORS — never do that. */
@@ -390,8 +393,8 @@
 
   function hook(el) {
     track(el);
-    if (!active || hooked.has(el) || blocked.has(el)) return;
-    if (!safeToHook(el)) { blocked.add(el); report(); return; }
+    if (!active || hooked.has(el) || blocked.has(el) || foreign.has(el)) return;
+    if (!safeToHook(el)) { (el.mediaKeys ? blocked : foreign).add(el); report(); return; }
     const ctx = getOwnCtx();
     if (ctx.state !== 'running') {
       // Routing into a suspended context would silence the element: leave it untouched for now.
@@ -446,7 +449,10 @@
     if (active) hook(this);
     return origPlay.apply(this, arguments);
   };
-  document.addEventListener('play', (e) => { if (e.target instanceof HTMLMediaElement) { track(e.target); if (active) hook(e.target); } }, true);
+  // 'playing' too: after a source switch the element may resume without a new 'play'
+  for (const type of ['play', 'playing']) {
+    document.addEventListener(type, (e) => { if (e.target instanceof HTMLMediaElement) { track(e.target); if (active) hook(e.target); } }, true);
+  }
 
   /* ---------------------------------------------------------
      Messaging with content.js
@@ -456,14 +462,16 @@
   }
 
   function status() {
-    let sources = 0, blockedCount = 0;
+    // sources: processed; blocked: can't be processed; playing: audible but untouched (neutral settings, not hooked yet)
+    let sources = 0, blockedCount = 0, playing = 0;
     media.forEach((el) => {
       if (el.paused || el.muted) return;
       if (hooked.has(el)) sources++;
-      else if (blocked.has(el)) blockedCount++;
+      else if (blocked.has(el) || foreign.has(el)) blockedCount++;
+      else playing++;
     });
     chains.forEach((ch, ctx) => { if (ctx !== ownCtx && ctx.state === 'running') sources++; });
-    return { v: PROTOCOL, sources, blocked: blockedCount, active };
+    return { v: PROTOCOL, sources, blocked: blockedCount, playing, active };
   }
 
   function report() { send({ type: 'status', ...status() }); }

@@ -262,7 +262,7 @@
   /* ---------------------------------------------------------
      Header: site chip, power, reset
      --------------------------------------------------------- */
-  let status = { sources: 0, blocked: 0 };
+  let status = { sources: 0, blocked: 0, playing: 0 };
   function renderSiteChip() {
     let label = host || '';
     if (!host && tab) { try { label = new URL(tab.url).protocol.replace(':', ''); } catch { label = ''; } }
@@ -271,10 +271,11 @@
     let st = '';
     if (kind === 'web') {
       if (!audio.enabled) st = tr('app.processingOff');
-      else st = status.sources ? tr('app.sources', { n: status.sources }) : tr('app.noAudio');
+      else if (status.sources) st = tr('app.sources', { n: status.sources });
+      else st = tr(status.playing ? 'app.playing' : 'app.noAudio'); // playing: heard, but nothing to change yet
     }
     $('#site-status').textContent = st ? '· ' + st : '';
-    $('#site-chip .dot').classList.toggle('live', kind === 'web' && audio.enabled && status.sources > 0);
+    $('#site-chip .dot').classList.toggle('live', kind === 'web' && audio.enabled && status.sources + status.playing > 0);
   }
 
   $('#btn-power').addEventListener('click', () => {
@@ -359,7 +360,7 @@
     link = null;
     frames.clear();
     gotReply = false;
-    status = { sources: 0, blocked: 0 };
+    status = { sources: 0, blocked: 0, playing: 0 };
     if (kind !== 'web' || !tab || pageState === 'noAccess' || pageState === 'restricted') { renderNotice(); return; }
     const l = API.connect(tab.id);
     link = l;
@@ -402,12 +403,13 @@
 
   function aggregate() {
     const now = performance.now();
-    const out = { sources: 0, blocked: 0, l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
+    const out = { sources: 0, blocked: 0, playing: 0, l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
     frames.forEach((f, k) => {
       const age = now - f.t;
       if (age > 2000) { frames.delete(k); return; }
       out.sources += f.r.sources || 0;
       out.blocked += f.r.blocked || 0;
+      out.playing += f.r.playing || 0;
       if (age > 400) return;
       const lv = f.r.levels;
       if (lv) {
@@ -1293,8 +1295,8 @@
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }
     const agg = aggregate();
-    if (agg.sources !== status.sources || agg.blocked !== status.blocked) {
-      status = { sources: agg.sources, blocked: agg.blocked };
+    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing) {
+      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing };
       renderSiteChip();
     }
     if (t - lastNotice > 500) { lastNotice = t; renderNotice(); }

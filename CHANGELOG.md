@@ -2,6 +2,11 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — unreleased
+
+- Fixed: sites whose player first points the video at another domain and then switches it to a streamed source stayed "can't be processed" — the source is now checked again whenever it changes
+- The popup shows "audio playing" instead of "no audio yet" when sound plays but the settings don't change anything yet
+
 ## [0.2.0] — unreleased
 
 Firefox for Android.
