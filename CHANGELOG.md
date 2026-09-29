@@ -2,12 +2,12 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [0.2.1] — unreleased
+## [0.2.1] — 2026-09-29
 
 - Fixed: sites whose player first points the video at another domain and then switches it to a streamed source stayed "can't be processed" — the source is now checked again whenever it changes
 - The popup shows "audio playing" instead of "no audio yet" when sound plays but the settings don't change anything yet
 
-## [0.2.0] — unreleased
+## [0.2.0] — 2026-09-26
 
 Firefox for Android.
 
@@ -19,14 +19,14 @@ Firefox for Android.
 - The popup finds the current page even when the browser opens it outside the page's window
 - Minimum Firefox version is now 142 (needed for the "no data collection" declaration on all platforms; removes the AMO validation warning)
 
-## [0.1.1] — unreleased
+## [0.1.1] — not published (superseded by 0.2.0)
 
 - Firefox for Android is no longer declared as supported until it has been tested (planned for 0.2.0)
 - On browsers without a sidebar (Firefox for Android) the "Open in sidebar" option is hidden and can never disable the toolbar button
 - The popup fits narrow phone screens instead of being cut off at 480 px
 - Keyboard shortcuts are hidden where the browser doesn't support them
 
-## [0.1.0] — unreleased
+## [0.1.0] — not published (superseded by 0.2.0)
 
 First version.
 
