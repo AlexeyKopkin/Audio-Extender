@@ -62,6 +62,9 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     sidebar: false,
     duck: false,
     showSilent: false,
+    speedKeys: true,        // S / D / R / G / Z / X on pages (content/speed.js)
+    speedKeysOff: {},       // sites where those keys stay the site's own: { host: true }
+    speedBadge: true,       // show "1.5×" briefly when the speed changes
   };
 
   const clone = (o) => JSON.parse(JSON.stringify(o));

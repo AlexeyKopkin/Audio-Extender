@@ -14,6 +14,9 @@ Chrome and Edge.
   - Firefox: the first choice opens Firefox's device picker from a button on the page; on later visits the device switches over with the first click on the page
   - Chrome / Edge: the tab plays through deep mode; device names need a one-time microphone permission (nothing is recorded)
   - Not available on Firefox for Android
+- Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. They work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
+- A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off)
+- Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
 
 ## [0.2.1] — 2026-09-29
 

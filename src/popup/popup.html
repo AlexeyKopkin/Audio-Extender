@@ -323,6 +323,12 @@
             <button class="chip" data-v="3">3×</button>
           </div>
           <div class="toggle-row"><span data-i18n="fx.pitch">Preserve pitch</span><label class="switch"><input type="checkbox" data-bind="fx.speed.pitch"><span></span></label></div>
+          <div class="toggle-row"><span data-i18n="fx.speedBadge">Show the speed when it changes</span><label class="switch"><input type="checkbox" data-app="speedBadge"><span></span></label></div>
+          <div class="speed-keys" id="speed-keys">
+            <div class="toggle-row"><span data-i18n="fx.speedKeys">Keyboard shortcuts on pages</span><label class="switch"><input type="checkbox" data-app="speedKeys"><span></span></label></div>
+            <div class="toggle-row" id="row-speed-site"><span id="speed-site-label"></span><label class="switch"><input type="checkbox" id="speed-site"><span></span></label></div>
+            <p class="sub keys-hint" id="speed-keys-hint"></p>
+          </div>
         </div>
       </div>
     </section>

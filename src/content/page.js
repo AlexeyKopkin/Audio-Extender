@@ -38,6 +38,8 @@
   const blocked = new WeakSet();     // elements we must never touch: DRM, or captured by the page itself
   const foreign = new WeakSet();     // current source is cross-origin without CORS — re-checked when the source changes
   let speedApplied = false;
+  const started = new WeakMap();     // element -> when its media last (re)started: our speed wins shortly after
+  const resets = new WeakMap();      // element -> how often we re-applied the speed since then
   let sink = '';                     // output device for this tab ('' = default), set by content.js once usable here
   const sunk = new WeakSet();        // unhooked elements we moved to `sink` with el.setSinkId
   const unsinking = new WeakSet();   // being moved back to the default device before hooking
@@ -91,9 +93,11 @@
     media.add(el);
     applySpeed(el);
     sinkElement(el);
-    el.addEventListener('loadedmetadata', () => applySpeed(el));
+    el.addEventListener('loadedmetadata', () => { started.set(el, performance.now()); applySpeed(el); });
     // Players often start with a cross-origin URL and then switch the same element to blob: (MSE/HLS).
-    el.addEventListener('loadstart', () => { if (foreign.delete(el)) report(); });
+    el.addEventListener('loadstart', () => { started.set(el, performance.now()); resets.delete(el); if (foreign.delete(el)) report(); });
+    el.addEventListener('play', () => started.set(el, performance.now()));
+    el.addEventListener('ratechange', () => guardRate(el));
   }
 
   /** createMediaElementSource outputs silence for DRM media and for cross-origin media without CORS — never do that. */
@@ -223,6 +227,20 @@
     if (!sink) return;
     setSink(''); // never silent: everything back to the default device
     send({ type: 'sink-failed', error: String((e && e.name) || e) });
+  }
+
+  /** Players that set the rate back when a new video starts: re-apply ours right after a (re)start.
+   *  A change later on is the viewer's own (the site's speed menu) and stays. */
+  function guardRate(el) {
+    if (!S || !speedApplied) return;
+    const want = S.fx.speed.value;
+    if (el.playbackRate === want) return;
+    const t = started.get(el);
+    if (t === undefined || performance.now() - t > 3000) return;
+    const n = (resets.get(el) || 0) + 1;
+    resets.set(el, n);
+    if (n > 5) return; // the site insists: don't fight it
+    try { el.playbackRate = want; } catch { /* locked */ }
   }
 
   function applySpeed(el) {

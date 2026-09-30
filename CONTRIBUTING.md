@@ -26,6 +26,7 @@ src/                     shared by all browsers
   shared/settings.js     settings model (defaults, per-site logic, schema version)
   content/chain.js       processing chain (one per AudioContext)
   content/page.js        audio engine (runs in the page)
+  content/speed.js       speed keys and the speed badge (isolated world, before content.js)
   content/content.js     bridge between the page and the extension
   popup/                 popup / sidebar UI (popup.js, api.js, i18n.js, popup.css)
   popup/preview.js       demo data for the design preview (not in the store packages)

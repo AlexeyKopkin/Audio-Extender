@@ -249,6 +249,7 @@
     const key = el.dataset.app;
     data.app[key] = el.checked;
     saveApp();
+    if (key === 'speedKeys') renderSpeedKeys();
     if (key === 'perSite' || key === 'autoEnable') {
       audio = AE.effective(data, host);
       if (link) link.post({ type: 'live', settings: audio });
@@ -261,7 +262,26 @@
   function renderAppControls() {
     $$('[data-app]').forEach((el) => { el.checked = !!data.app[el.dataset.app]; });
     root.classList.toggle('no-anim', !data.app.animations);
+    renderSpeedKeys();
   }
+
+  /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
+     Phones have no keyboard: only the badge switch stays. */
+  const KEY_HINT = [['S', 'D', 'fx.keySlowerFaster'], ['R', null, 'fx.keyReset'], ['G', null, 'fx.keyToggle'], ['Z', 'X', 'fx.keySeek']];
+  function renderSpeedKeys() {
+    $('#speed-keys').classList.toggle('hidden', !!MOBILE);
+    const siteRow = $('#row-speed-site');
+    siteRow.classList.toggle('hidden', !host || kind !== 'web' || !data.app.speedKeys);
+    $('#speed-site-label').textContent = tr('fx.speedKeysSite', { site: host || '' });
+    $('#speed-site').checked = !(data.app.speedKeysOff || {})[host];
+    setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => `<kbd>${a}</kbd>${b ? ` <kbd>${b}</kbd>` : ''} ${esc(tr(k))}`).join(' · '));
+  }
+  $('#speed-site').addEventListener('change', (e) => {
+    const off = { ...(data.app.speedKeysOff || {}) };
+    if (e.target.checked) delete off[host]; else off[host] = true;
+    data.app.speedKeysOff = off;
+    saveApp();
+  });
 
   /* ---------------------------------------------------------
      Header: site chip, power, reset
