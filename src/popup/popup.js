@@ -220,7 +220,8 @@
     const pw = $('#btn-power');
     pw.classList.toggle('on', audio.enabled);
     pw.setAttribute('aria-pressed', audio.enabled);
-    $('#app').classList.toggle('off', !audio.enabled);
+    // switched off by the user; a site outside the allow list is "na" instead, so its notice stays clickable
+    $('#app').classList.toggle('off', !audio.enabled && AE.siteAllowed(data.app, host));
     $('#eq-graph').classList.toggle('bypass', !audio.eq.on);
     renderSiteChip();
   }
@@ -302,6 +303,7 @@
     root.classList.toggle('no-anim', !data.app.animations);
     renderSpeedKeys();
     renderMaxGain();
+    renderAllow();
   }
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
@@ -399,6 +401,45 @@
     saveApp();
     renderSpeedKeys();
   });
+  /* "Only on sites I choose": the switch, the list of allowed sites, and adding the current one. */
+  function renderAllow() {
+    const on = data.app.siteMode === 'allow';
+    $('#allow-mode').checked = on;
+    $('#allow-card').classList.toggle('hidden', !on);
+    if (!on) return;
+    const hosts = Object.keys(data.app.allow || {}).filter((h) => data.app.allow[h]).sort();
+    $('#allow-count').textContent = hosts.length;
+    setHTML($('#allow-list'), hosts.length
+      ? hosts.map((h) => `<div class="site-row" data-host="${esc(h)}">${letterBadge(h, 'sm')}<div class="grow"><b>${esc(h)}</b></div><button class="icon-btn sm danger" data-del title="${esc(tr('set.allowRemove'))}"><svg class="ic"><use href="#i-trash"/></svg></button></div>`).join('')
+      : `<div class="empty">${esc(tr('set.allowEmpty'))}</div>`);
+    const add = $('#allow-add');
+    const canAdd = kind === 'web' && !!host && !hosts.includes(host);
+    add.classList.toggle('hidden', !canAdd);
+    if (canAdd) add.textContent = tr('set.allowAdd', { site: host });
+  }
+  function setAllowed(h, yes) {
+    const allow = { ...(data.app.allow || {}) };
+    if (yes) allow[h] = true; else delete allow[h];
+    data.app.allow = allow;
+    saveApp();
+    if (h === host) {
+      audio = AE.effective(data, host);
+      if (link) link.post({ type: 'live', settings: audio });
+    }
+    renderAll();
+  }
+  $('#allow-mode').addEventListener('change', (e) => {
+    data.app.siteMode = e.target.checked ? 'allow' : 'all';
+    saveApp();
+    audio = AE.effective(data, host);
+    if (link) link.post({ type: 'live', settings: audio });
+    renderAll();
+  });
+  $('#allow-list').addEventListener('click', (e) => {
+    if (e.target.closest('[data-del]')) setAllowed(e.target.closest('.site-row').dataset.host, false);
+  });
+  $('#allow-add').addEventListener('click', () => setAllowed(host, true));
+
   function renderMaxGain() {
     setHTML($('#max-gain'), AE.GAIN_CAPS.map((v) => `<option value="${v}">${v}%</option>`).join(''));
     $('#max-gain').value = AE.gainCap(data.app);
@@ -477,6 +518,7 @@
     else if (kind !== 'web') { n = { t: tr('app.unavailable'), d: tr('app.unavailableDesc') }; na = true; }
     else if (pageState === 'noAccess') { n = { t: tr('app.noAccess'), d: tr('app.noAccessDesc'), b: tr('app.allowSite'), act: grantAccess }; na = true; }
     else if (pageState === 'restricted') { n = { t: tr('app.restrictedSite'), d: tr('app.restrictedSiteDesc') }; na = true; }
+    else if (!AE.siteAllowed(data.app, host)) { n = { t: tr('allow.offTitle'), d: tr('allow.offDesc'), b: tr('allow.turnOn'), act: () => setAllowed(host, true) }; na = true; }
     else if (pageState === 'reload') { n = { t: tr('app.reloadNeeded'), d: tr('app.reloadNeededDesc'), ...reload }; na = true; }
     else if (pageState === 'outdated') { n = { t: tr('app.reloadNeeded'), d: tr('app.updatedDesc'), ...reload }; na = true; }
     else if (deepError) n = { t: tr('deep.failed'), d: tr('deep.failedDesc') };
@@ -1514,7 +1556,7 @@
     const box = $('#profiles');
     if (!hosts.length) { setHTML(box, `<div class="empty">${esc(tr('set.noProfiles'))}</div>`); return; }
     setHTML(box, hosts.map((h) => {
-      const s = AE.effective({ ...data, app: { ...data.app, perSite: true } }, h);
+      const s = AE.effective({ ...data, app: { ...data.app, perSite: true, siteMode: 'all' } }, h); // what is stored, allowed or not
       const tags = [];
       tags.push(s.enabled ? s.gain + '%' : tr('app.processingOff'));
       if (AE.eqActive(s)) tags.push(tr('tab.eq'));

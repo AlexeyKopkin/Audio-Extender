@@ -81,6 +81,8 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
     seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
     seekScaled: false,      // the jump grows with the speed (2× → twice as far)
+    siteMode: 'all',        // 'all' | 'allow': only on the sites in `allow`
+    allow: {},              // { host: true } for siteMode 'allow'
     speedWheel: false,      // Shift + mouse wheel over a video changes the speed
     speedKeyMap: { ...SPEED_KEYS }, // action → key code ('' = off)
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
@@ -127,6 +129,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
    *  Kept apart from the audio settings: device ids belong to this browser profile
    *  (per origin), so they are not part of presets, profiles or exported files. */
   function outputFor(data, host) {
+    if (data && !siteAllowed(data.app, host)) return null;
     const o = host && data && isObj(data.outputs) ? data.outputs[host] : null;
     return o && typeof o.id === 'string' && o.id ? { id: o.id, label: String(o.label || '') } : null;
   }
@@ -143,6 +146,11 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   }
   const speedKeyOk = (code) => KEY_CODE_OK.test(code);
 
+  /** False on sites outside the user's list in "only on sites I choose" mode: nothing may touch them. */
+  function siteAllowed(app, host) {
+    return !(app && app.siteMode === 'allow') || !!(host && isObj(app.allow) && app.allow[host]);
+  }
+
   /** The highest gain the user allows (Settings → Maximum volume). */
   const gainCap = (app) => (app && GAIN_CAPS.includes(app.maxGain) ? app.maxGain : MAX_GAIN);
 
@@ -150,6 +158,8 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
    *  The gain is capped here, so no stored or imported value can play louder than the maximum. */
   function effective(data, host) {
     const d = normalize(data);
+    // a site outside the allow list gets neutral, switched-off settings: the page is left alone
+    if (!siteAllowed(d.app, host)) return { ...clone(DEFAULT_AUDIO), enabled: false };
     const site = d.app.perSite && host ? d.sites[host] : null;
     const s = merge(d.defaults, site);
     if (d.app.perSite && !site && !d.app.autoEnable) s.enabled = false;
@@ -226,7 +236,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
-    G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, SPEED_KEYS, speedKeyMap, speedKeyOk, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
+    G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, SPEED_KEYS, speedKeyMap, speedKeyOk, siteAllowed, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
     clone, merge, hostOf, normalize, effective, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
