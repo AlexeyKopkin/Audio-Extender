@@ -139,10 +139,12 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     return s.fx.mono.on || (s.fx.width.on && s.fx.width.value !== 100) || s.fx.balance.value !== 0;
   }
 
-  /** True when the page's audio goes through the chain: whenever processing is on — also at
-   *  neutral settings, so the meters show the sound and the limiter guards it. Power off: untouched. */
+  /** True when the audio graph must actually change the sound. At neutral settings the page's audio
+   *  is left untouched: routing it anyway is where audio extensions break sites and cost CPU. */
   function needsProcessing(s) {
-    return !!s.enabled;
+    if (!s.enabled) return false;
+    return s.gain !== 100 || eqActive(s) || !!s.autoeq.id ||
+      s.fx.dialog.on || s.fx.night.on || s.fx.bass.on || s.fx.norm.on || matrixActive(s);
   }
 
   /** Parse an AutoEq "ParametricEQ.txt" file. */

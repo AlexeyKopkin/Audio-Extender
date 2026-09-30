@@ -17,7 +17,6 @@ Chrome and Edge.
 - Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. They work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
 - A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off)
 - Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
-- The level meters and the limiter work as soon as audio plays, also at 100% with nothing changed (before, audio was only routed after a setting changed); with the power button off the page stays untouched
 - Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
 
 ## [0.2.1] — 2026-09-29
