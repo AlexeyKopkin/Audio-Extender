@@ -57,7 +57,8 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   /** Extension-wide preferences. */
   // Speed keys on pages (content/speed.js): KeyboardEvent.code per action ('' = off), so any layout works
-  const SPEED_KEYS = { slower: 'KeyS', faster: 'KeyD', reset: 'KeyR', toggle: 'KeyG', back: 'KeyZ', forward: 'KeyX' };
+  // hold: 2× while the key is held (no key by default: users pick one, so no site loses a key)
+  const SPEED_KEYS = { slower: 'KeyS', faster: 'KeyD', reset: 'KeyR', toggle: 'KeyG', back: 'KeyZ', forward: 'KeyX', hold: '' };
   // keys that can be assigned: letters, digits, punctuation, F1–F12 — never Tab / Enter / Esc / Space / arrows
   const KEY_CODE_OK = /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|F([1-9]|1[0-2])|Comma|Period|Slash|Semicolon|Quote|Backquote|BracketLeft|BracketRight|Backslash|Minus|Equal)$/;
 

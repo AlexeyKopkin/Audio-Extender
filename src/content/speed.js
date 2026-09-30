@@ -8,6 +8,8 @@
    the user can change them: app.speedKeyMap, see AE.speedKeyMap):
      S / D  slower / faster (step: app.speedStep, 0.1)   R  back to 1×
      G      1× ↔ the last other speed  Z / X  back / forward (app.seekSeconds, 10 s)
+   Hold (a key the user assigns): 2× while held (double the speed from 2× up),
+   back to the site's speed on release; never stored.
    Range 0.1–16×.
    Shift + mouse wheel over a video: faster / slower by the same step
    (app.speedWheel, off by default; the listener exists only while it is on,
@@ -58,7 +60,9 @@
       if (typing(e) || !mediaHere()) return;
 
       const cur = s.fx.speed.value;
-      if (action === 'back' || action === 'forward') {
+      if (action === 'hold') {
+        if (!held && !e.repeat) holdStart(e.code, cur);
+      } else if (action === 'back' || action === 'forward') {
         const el = target();
         if (!el || !isFinite(el.currentTime)) return;
         const seek = pick(app.seekSeconds, AE.SEEK_STEPS, 10);
@@ -81,6 +85,38 @@
       e.stopImmediatePropagation();
     }
     addEventListener('keydown', onKey, true);
+
+    /* ---------- hold for 2× ---------- */
+    let held = null; // { code, el } while the hold key is down
+
+    function holdStart(code, cur) {
+      const el = target();
+      if (!el) return;
+      const rate = cur < 2 ? 2 : Math.min(AE.SPEED_MAX, cur * 2);
+      held = { code, el };
+      try { el.playbackRate = rate; } catch { held = null; return; }
+      badge(rate);
+    }
+
+    function holdEnd() {
+      if (!held) return;
+      const { el } = held;
+      held = null;
+      const s = env.settings();
+      const v = s ? s.fx.speed.value : 1;
+      try { el.playbackRate = v; } catch { /* locked by the player */ }
+      badge(v);
+    }
+
+    addEventListener('keyup', (e) => {
+      if (!held || e.code !== held.code) return;
+      holdEnd();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
+    // released while the page wasn't listening (another window, tab switch): don't stay fast
+    addEventListener('blur', holdEnd);
+    document.addEventListener('visibilitychange', holdEnd);
 
     /* ---------- Shift + wheel over a video ---------- */
     let wheelOn = false, lastWheel = 0;
