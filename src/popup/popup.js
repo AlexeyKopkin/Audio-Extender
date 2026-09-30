@@ -82,6 +82,10 @@
   $('#row-sidebar').classList.toggle('hidden', !API.hasSidebar);
   $('#card-hotkeys').classList.toggle('hidden', !API.hasShortcuts);
   $('#mute-others').classList.toggle('hidden', !API.canMute);
+  // output device per tab: 'deep' (Chrome / Edge), 'page' (Firefox) or null (not available, e.g. Firefox for Android)
+  const OUT_MODE = API.outputMode;
+  // Chrome / Edge: the extension page opened to allow listing the audio devices
+  const GRANT_PAGE = API.context === 'tab' && new URLSearchParams(location.search).get('grant') === 'devices';
   if (API.context === 'sidebar') root.classList.add('sidebar');
   if (API.context === 'tab') root.classList.add('page');
 
@@ -262,7 +266,7 @@
   /* ---------------------------------------------------------
      Header: site chip, power, reset
      --------------------------------------------------------- */
-  let status = { sources: 0, blocked: 0, playing: 0, deep: false };
+  let status = { sources: 0, blocked: 0, playing: 0, deep: false, out: '' };
   function renderSiteChip() {
     let label = host || '';
     if (!host && tab) { try { label = new URL(tab.url).protocol.replace(':', ''); } catch { label = ''; } }
@@ -308,7 +312,12 @@
   function renderNotice() {
     let n = null, na = false;
     const reload = { b: tr('app.reload'), act: reloadTab };
-    if (API.context === 'tab') na = true;
+    if (GRANT_PAGE) {
+      n = grantResult
+        ? { t: tr('dev.grantTitle'), d: tr(grantResult === 'granted' ? 'dev.granted' : 'dev.denied') }
+        : { t: tr('dev.grantTitle'), d: tr('dev.grantDesc'), b: tr('dev.grant'), act: grantDevices };
+      na = true;
+    } else if (API.context === 'tab') na = true;
     else if (kind !== 'web') { n = { t: tr('app.unavailable'), d: tr('app.unavailableDesc') }; na = true; }
     else if (pageState === 'noAccess') { n = { t: tr('app.noAccess'), d: tr('app.noAccessDesc'), b: tr('app.allowSite'), act: grantAccess }; na = true; }
     else if (pageState === 'restricted') { n = { t: tr('app.restrictedSite'), d: tr('app.restrictedSiteDesc') }; na = true; }
@@ -337,13 +346,22 @@
   }
   // Deep mode (where the platform supports it): process the tab's whole output instead of single sources
   let deepError = false;
-  async function startDeep() {
+  // quiet: started for a remembered output device — a failure only shows up as the device hint
+  async function startDeep(quiet) {
     if (!tab) return;
     let res;
     try { res = await API.captureStart(tab.id); } catch (e) { res = { ok: false, error: String(e) }; }
-    deepError = !(res && res.ok);
-    if (deepError) { renderNotice(); return; }
+    if (!(res && res.ok)) {
+      if (quiet === true) { autoDeep = 'failed'; renderOutput(); } else { deepError = true; renderNotice(); }
+      return;
+    }
+    autoDeep = null;
     connect();
+  }
+  let grantResult = null;
+  async function grantDevices() {
+    try { await API.grantOutputs(); grantResult = 'granted'; } catch { grantResult = 'denied'; }
+    renderNotice();
   }
   async function stopDeep() {
     if (!tab) return;
@@ -382,8 +400,9 @@
     frames.clear();
     gotReply = false;
     deepError = false;
-    status = { sources: 0, blocked: 0, playing: 0, deep: false };
+    status = { sources: 0, blocked: 0, playing: 0, deep: false, out: '' };
     if (kind !== 'web' || !tab || pageState === 'noAccess' || pageState === 'restricted') { renderNotice(); return; }
+    autoDeepStart();
     const l = API.connect(tab.id);
     link = l;
     l.onMessage((m) => {
@@ -425,7 +444,7 @@
 
   function aggregate() {
     const now = performance.now();
-    const out = { sources: 0, blocked: 0, playing: 0, deep: false, l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
+    const out = { sources: 0, blocked: 0, playing: 0, deep: false, out: '', l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
     frames.forEach((f, k) => {
       const age = now - f.t;
       if (age > 2000) { frames.delete(k); return; }
@@ -433,6 +452,7 @@
       out.blocked += f.r.blocked || 0;
       out.playing += f.r.playing || 0;
       if (f.r.deep) out.deep = true;
+      if (typeof f.r.out === 'string' && (f.r.deep || !out.out)) out.out = f.r.out; // output device state (deep mode wins)
       if (age > 400) return;
       const lv = f.r.levels;
       if (lv) {
@@ -446,6 +466,99 @@
     // the whole tab is processed (deep mode): nothing is left unprocessed or untouched
     if (out.deep) { out.blocked = 0; out.playing = 0; }
     return out;
+  }
+
+  /* ---------------------------------------------------------
+     Output device per tab (Booster row + a select in every Mixer row)
+     --------------------------------------------------------- */
+  let outDevices = { granted: false, devices: [] }; // 'deep': the devices the extension can see
+  let autoDeep = null;                              // 'deep': pending | failed — deep mode for a remembered device
+  let autoDeepTab = null;
+
+  async function loadOutputs() {
+    if (OUT_MODE === 'deep') outDevices = await API.listOutputs();
+  }
+  if (OUT_MODE && navigator.mediaDevices) {
+    navigator.mediaDevices.addEventListener('devicechange', async () => {
+      await loadOutputs();
+      renderOutput();
+      if (currentPanel === 'mixer') refreshMixer();
+    });
+  }
+
+  function outOptions(h) {
+    const saved = AE.outputFor(data, h);
+    const opts = [{ v: '', t: tr('dev.default') }];
+    if (OUT_MODE === 'deep' && outDevices.granted) opts.push(...outDevices.devices.map((d) => ({ v: d.id, t: d.label || d.id.slice(0, 8) })));
+    if (saved && !opts.some((o) => o.v === saved.id)) opts.push({ v: saved.id, t: saved.label || '…' });
+    if (OUT_MODE === 'deep' && !outDevices.granted) opts.push({ v: '#show', t: tr('dev.show') });
+    if (OUT_MODE === 'page') opts.push({ v: '#choose', t: tr('dev.choose') });
+    const cur = saved ? saved.id : '';
+    return opts.map((o) => ({ ...o, sel: o.v === cur }));
+  }
+  const optionsHTML = (h) => outOptions(h).map((o) => `<option value="${esc(o.v)}"${o.sel ? ' selected' : ''}>${esc(o.t)}</option>`).join('');
+
+  /** Why the tab doesn't (yet) play on its chosen device; '' when it does or nothing is chosen. */
+  function outHint(h, current) {
+    if (!AE.outputFor(data, h)) return '';
+    const out = current ? status.out : '';
+    if (out === 'lost') return tr('dev.lost');
+    if (out === 'failed') return tr('dev.failed');
+    if (OUT_MODE === 'page') return current && out === 'wait' ? tr('dev.wait') : '';
+    if (!current) return tr('dev.otherTab');
+    if (status.deep) return tr('dev.deep');
+    return autoDeep === 'failed' ? tr('deep.failedDesc') : '';
+  }
+
+  function renderOutput() {
+    const on = !!OUT_MODE && kind === 'web' && API.context !== 'tab' && pageState !== 'noAccess' && pageState !== 'restricted';
+    $('#dev-row').classList.toggle('hidden', !on);
+    const hint = on ? outHint(host, true) : '';
+    $('#dev-hint').classList.toggle('hidden', !hint);
+    $('#dev-hint').textContent = hint;
+    if (!on) return;
+    const sel = $('#dev-select');
+    if (document.activeElement === sel) return; // don't rebuild an open list
+    sel.replaceChildren(...outOptions(host).map((o) => new Option(o.t, o.v, o.sel, o.sel)));
+    sel.title = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '';
+  }
+
+  async function chooseOutput(t, h, value, sel) {
+    const saved = AE.outputFor(data, h);
+    if (value === '#show' || value === '#choose') {
+      sel.value = saved ? saved.id : '';
+      if (value === '#show') API.openTab(API.pageUrl('?page=1&grant=devices'));
+      else {
+        // Firefox: the device picker can only open from a click in the page itself
+        try { await API.askOutput(t.id, { ask: tr('dev.ask'), close: tr('dev.close') }); } catch { /* no content script */ }
+        if (!tab || t.id !== tab.id) API.activateTab(t.id);
+      }
+      if (API.context === 'popup') window.close(); // the page / the new tab needs the focus
+      return;
+    }
+    const outputs = { ...data.outputs };
+    if (value) outputs[h] = { id: value, label: ((outDevices.devices.find((d) => d.id === value)) || saved || {}).label || '' };
+    else delete outputs[h];
+    data.outputs = outputs;
+    lastEdit = Date.now();
+    API.persist({ outputs });
+    // Chrome / Edge: the chosen device needs deep mode (allowed now: the extension was opened on this tab)
+    if (OUT_MODE === 'deep' && value && API.canCapture && tab && t.id === tab.id) {
+      const id = tab.id;
+      API.captureIsOn(id).then((on) => { if (!on && tab && tab.id === id) startDeep(true); }, () => {});
+    }
+    renderOutput();
+  }
+  $('#dev-select').addEventListener('change', (e) => { if (tab) chooseOutput(tab, host, e.target.value, e.target); });
+
+  /** Chrome / Edge: a remembered device for this site → start deep mode as soon as the extension is opened here. */
+  function autoDeepStart() {
+    if (OUT_MODE !== 'deep' || !API.canCapture || API.context === 'tab' || !tab || !AE.outputFor(data, host)) return;
+    if (autoDeepTab === tab.id) return;
+    autoDeepTab = tab.id;
+    autoDeep = 'pending';
+    const id = tab.id;
+    API.captureIsOn(id).then((on) => { if (on) autoDeep = null; else if (tab && tab.id === id) startDeep(true); }, () => {});
   }
 
   /* =========================================================
@@ -1067,6 +1180,7 @@
             <div class="mix-meta">${esc(meta)}</div>
             <div class="mix-controls"><input type="range" min="0" max="${AE.MAX_GAIN}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
             <div class="mini-meter"><i></i></div>
+            ${OUT_MODE ? `<select class="mix-dev" aria-label="${esc(tr('dev.title'))}" title="${esc(outHint(h, t.id === current) || tr('dev.title'))}">${optionsHTML(h)}</select>` : ''}
           </div>
           ${API.canMute ? `<div class="mix-btns">
             <button class="mb mute" title="${esc(tr(muted ? 'mixer.unmute' : 'mixer.mute'))}"><svg class="ic"><use href="#i-volume${muted ? '-x' : ''}"/></svg></button>
@@ -1128,6 +1242,12 @@
       }
     } else return;
     refreshMixer();
+  });
+  $('#mix-list').addEventListener('change', (e) => {
+    if (!e.target.classList.contains('mix-dev')) return;
+    const item = e.target.closest('.mix-item');
+    const t = mixTabs.find((x) => x.id === +item.dataset.id);
+    if (t) chooseOutput(t, item.dataset.host, e.target.value, e.target);
   });
   $('#mute-others').addEventListener('click', async () => {
     const current = tab && tab.id;
@@ -1280,6 +1400,7 @@
     renderAutoEq();
     eq.refresh();
     renderNotice();
+    renderOutput();
     if (currentPanel === 'settings') { renderProfiles(); renderHotkeys(); }
     if (currentPanel === 'mixer') refreshMixer();
   }
@@ -1323,9 +1444,11 @@
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }
     const agg = aggregate();
-    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing || agg.deep !== status.deep) {
-      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing, deep: agg.deep };
+    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing || agg.deep !== status.deep || agg.out !== status.out) {
+      const outChanged = agg.out !== status.out || agg.deep !== status.deep;
+      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing, deep: agg.deep, out: agg.out };
       renderSiteChip();
+      if (outChanged) renderOutput();
     }
     if (t - lastNotice > 500) { lastNotice = t; renderNotice(); }
     if (currentPanel === 'booster') renderMeters(agg, t);
@@ -1349,6 +1472,7 @@
   I18N.apply(data.app.lang);
   $$('.lang', langWrap).forEach((b) => b.classList.toggle('active', b.dataset.lang === I18N.lang));
   showTab(tabs.some((t) => t.dataset.tab === hashTab) ? hashTab : ui.get('tab', 'booster'));
+  await loadOutputs();
   await switchTab(await API.activeTab());
   addEventListener('resize', () => eq.render());
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('preload')));

@@ -22,7 +22,7 @@
 
   const TO_PAGE = 'audio-extender:to-page';
   const TO_CONTENT = 'audio-extender:to-content';
-  const PROTOCOL = 1; // keep in sync with AE.PROTOCOL in shared/settings.js
+  const PROTOCOL = 2; // keep in sync with AE.PROTOCOL in shared/settings.js
 
   const origConnect = AudioNode.prototype.connect;
   const origDisconnect = AudioNode.prototype.disconnect;
@@ -38,13 +38,24 @@
   const blocked = new WeakSet();     // elements we must never touch: DRM, or captured by the page itself
   const foreign = new WeakSet();     // current source is cross-origin without CORS — re-checked when the source changes
   let speedApplied = false;
+  let sink = '';                     // output device for this tab ('' = default), set by content.js once usable here
+  const sunk = new WeakSet();        // unhooked elements we moved to `sink` with el.setSinkId
+  const unsinking = new WeakSet();   // being moved back to the default device before hooking
+  // Media is routed through our chain when the sound must change, or when the tab plays on another device:
+  // then the chain carries the device, one place for every source it can take.
+  const route = () => active || !!sink;
 
   const { Chain } = createChainKit({ get S() { return S; }, get active() { return active; }, get duck() { return duck; } });
 
 
   function chainFor(ctx) {
     let ch = chains.get(ctx);
-    if (!ch) { ch = new Chain(ctx); chains.set(ctx, ch); }
+    if (!ch) {
+      ch = new Chain(ctx);
+      chains.set(ctx, ch);
+      ch.onSinkLost = () => sinkFailed('lost');
+      if (sink) sinkChain(ch);
+    }
     return ch;
   }
 
@@ -79,6 +90,7 @@
     if (!(el instanceof HTMLMediaElement) || media.has(el)) return;
     media.add(el);
     applySpeed(el);
+    sinkElement(el);
     el.addEventListener('loadedmetadata', () => applySpeed(el));
     // Players often start with a cross-origin URL and then switch the same element to blob: (MSE/HLS).
     el.addEventListener('loadstart', () => { if (foreign.delete(el)) report(); });
@@ -142,8 +154,8 @@
 
   function hook(el) {
     track(el);
-    if (!active || hooked.has(el) || blocked.has(el) || foreign.has(el)) return;
-    if (!safeToHook(el)) { (el.mediaKeys ? blocked : foreign).add(el); report(); return; }
+    if (!route() || hooked.has(el) || blocked.has(el) || foreign.has(el)) return;
+    if (!safeToHook(el)) { (el.mediaKeys ? blocked : foreign).add(el); sinkElement(el); report(); return; }
     const ctx = getOwnCtx();
     if (ctx.state !== 'running') {
       // Routing into a suspended context would silence the element: leave it untouched for now.
@@ -153,20 +165,64 @@
       return;
     }
     if (!rendering(ctx)) { whenRendering(hookAll); return; }
+    // It had its own device while it couldn't be routed: back to the default first —
+    // once hooked, the chain plays it on the chosen device.
+    if (sunk.has(el) || unsinking.has(el)) {
+      if (!unsinking.has(el)) {
+        sunk.delete(el);
+        unsinking.add(el);
+        el.setSinkId('').catch(() => {}).then(() => { unsinking.delete(el); hook(el); });
+      }
+      return;
+    }
     try {
       const src = ctx.createMediaElementSource(el);
       origConnect.call(src, chainFor(ctx).input);
       hooked.set(el, src);
     } catch {
       blocked.add(el); // already captured by the page itself — its context is routed anyway
+      sinkElement(el);
     }
     report();
   }
 
   function hookAll() {
     document.querySelectorAll('audio, video').forEach(track);
-    if (!active) return;
+    if (!route()) return;
     media.forEach((el) => { if (!el.paused || el.currentTime > 0) hook(el); });
+  }
+
+  /* ---------------------------------------------------------
+     Output device (Firefox: selectAudioOutput in content.js makes the id usable in this document).
+     Chains play through setSink(); media we can't route (cross-origin without CORS, DRM)
+     uses its own setSinkId. A failure there only leaves that element on the default device.
+     --------------------------------------------------------- */
+  function sinkElement(el) {
+    if (typeof el.setSinkId !== 'function' || hooked.has(el) || unsinking.has(el)) return;
+    if (sink && (blocked.has(el) || foreign.has(el))) {
+      el.setSinkId(sink).then(() => sunk.add(el), () => {});
+    } else if (sunk.has(el)) {
+      sunk.delete(el);
+      el.setSinkId('').catch(() => {});
+    }
+  }
+
+  function setSink(id) {
+    id = typeof id === 'string' ? id : '';
+    if (id === sink) return;
+    sink = id;
+    media.forEach(sinkElement);
+    chains.forEach(sinkChain);
+    hookAll(); // playing media joins the chain (and the page's own contexts are routed already)
+    report();
+  }
+
+  function sinkChain(ch) { ch.setSink(sink).catch((e) => sinkFailed(e)); }
+
+  function sinkFailed(e) {
+    if (!sink) return;
+    setSink(''); // never silent: everything back to the default device
+    send({ type: 'sink-failed', error: String((e && e.name) || e) });
   }
 
   function applySpeed(el) {
@@ -183,24 +239,24 @@
   const origSetMediaKeys = HTMLMediaElement.prototype.setMediaKeys;
   if (origSetMediaKeys) {
     HTMLMediaElement.prototype.setMediaKeys = function (keys) {
-      if (keys) { track(this); if (!hooked.has(this)) blocked.add(this); }
+      if (keys) { track(this); if (!hooked.has(this)) { blocked.add(this); sinkElement(this); } }
       return origSetMediaKeys.apply(this, arguments);
     };
   }
   document.addEventListener('encrypted', (e) => {
     const el = e.target;
-    if (el instanceof HTMLMediaElement && !hooked.has(el)) { track(el); blocked.add(el); report(); }
+    if (el instanceof HTMLMediaElement && !hooked.has(el)) { track(el); blocked.add(el); sinkElement(el); report(); }
   }, true);
 
   const origPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function () {
     track(this);
-    if (active) hook(this);
+    if (route()) hook(this);
     return origPlay.apply(this, arguments);
   };
   // 'playing' too: after a source switch the element may resume without a new 'play'
   for (const type of ['play', 'playing']) {
-    document.addEventListener(type, (e) => { if (e.target instanceof HTMLMediaElement) { track(e.target); if (active) hook(e.target); } }, true);
+    document.addEventListener(type, (e) => { if (e.target instanceof HTMLMediaElement) { track(e.target); if (route()) hook(e.target); } }, true);
   }
 
   /* ---------------------------------------------------------
@@ -267,6 +323,8 @@
       }
       if (active && !wasActive) hookAll();
       report();
+    } else if (msg.type === 'sink') {
+      setSink(msg.id);
     } else if (msg.type === 'poll') {
       send({ type: 'reply', ...poll(msg.want || []) });
     }

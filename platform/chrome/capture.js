@@ -39,18 +39,19 @@ async function settingsFor(tabId) {
   const tab = await chrome.tabs.get(tabId);
   await ready;
   const host = AE.hostOf(tab.url);
-  return { host, settings: AE.effective(data, host), duck: await getDuck(tabId) };
+  const output = AE.outputFor(data, host);
+  return { host, settings: AE.effective(data, host), duck: await getDuck(tabId), output: output ? output.id : '' };
 }
 
 async function captureStart(tabId) {
-  const { host, settings, duck } = await settingsFor(tabId);
+  const { host, settings, duck, output } = await settingsFor(tabId);
   await setBypass(tabId, true);
   let res;
   try {
     // Chrome allows this only after the user invoked the extension on this tab (popup / shortcut).
     const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
     await ensureOffscreen();
-    res = await toOffscreen({ type: 'offscreen-start', tabId, streamId, settings, duck });
+    res = await toOffscreen({ type: 'offscreen-start', tabId, streamId, settings, duck, output });
   } catch (e) {
     res = { ok: false, error: String((e && e.message) || e) };
   }
@@ -75,9 +76,9 @@ async function pushToCaptures(onlyTabId) {
     const tabId = +id;
     if (onlyTabId !== undefined && tabId !== onlyTabId) continue;
     try {
-      const { host, settings, duck } = await settingsFor(tabId);
+      const { host, settings, duck, output } = await settingsFor(tabId);
       if (host !== deep[id]) await setDeepTab(tabId, host);
-      await toOffscreen({ type: 'offscreen-update', tabId, settings, duck });
+      await toOffscreen({ type: 'offscreen-update', tabId, settings, duck, output });
     } catch { /* tab gone */ }
   }
 }

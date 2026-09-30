@@ -44,6 +44,33 @@
     get canCapture() { return !!(PLATFORM.capture && PLATFORM.capture.available); },
     captureStart(tabId) { return PLATFORM.capture.start(tabId); },
     captureStop(tabId) { return PLATFORM.capture.stop(tabId); },
+    captureIsOn(tabId) { return PLATFORM.capture.isOn(tabId); },
+
+    /* Output device per tab. Device ids are per origin, so how a tab gets its device differs:
+         'deep' — Chrome / Edge: the extension lists devices (needs microphone access once) and the
+                  tab plays through deep mode, whose AudioContext.setSinkId takes those ids;
+         'page' — Firefox: the page itself selects the device (selectAudioOutput, see content.js);
+         null   — not available (Firefox for Android). */
+    get outputMode() {
+      if (this.canCapture && typeof AudioContext !== 'undefined' && typeof AudioContext.prototype.setSinkId === 'function') return 'deep';
+      const md = navigator.mediaDevices;
+      if (md && typeof md.selectAudioOutput === 'function' && typeof HTMLMediaElement.prototype.setSinkId === 'function') return 'page';
+      return null;
+    },
+    /** 'deep': output devices visible to the extension; `granted` false = names hidden until microphone access. */
+    async listOutputs() {
+      let list = [];
+      try { list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audiooutput'); } catch { /* none */ }
+      const granted = list.some((d) => d.deviceId);
+      return { granted, devices: list.filter((d) => d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications').map((d) => ({ id: d.deviceId, label: d.label })) };
+    },
+    /** 'deep': ask for microphone access once, only so the device names become visible. Nothing is recorded. */
+    async grantOutputs() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+    },
+    /** 'page': show the in-page chip that opens the browser's device picker (top frame). */
+    askOutput(tabId, text) { return browser.tabs.sendMessage(tabId, { type: 'output-ask', text }, { frameId: 0 }); },
 
     async load() { return AE.normalize(await browser.storage.local.get(AE.KEYS)); },
     persist(patch) { return browser.runtime.sendMessage({ type: 'persist', patch }).catch(() => browser.storage.local.set(patch)); },
@@ -125,6 +152,7 @@
     },
     setMuted(tabId, muted) { return browser.tabs.update(tabId, { muted }); },
     reloadTab(tabId) { return browser.tabs.reload(tabId); },
+    activateTab(tabId) { return browser.tabs.update(tabId, { active: true }); },
     commands() { return browser.commands.getAll(); },
     openTab(url) { return browser.tabs.create({ url }); },
     pageUrl(query) { return browser.runtime.getURL('popup/popup.html' + query); },
