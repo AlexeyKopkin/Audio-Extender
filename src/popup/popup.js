@@ -149,6 +149,43 @@
   }
   $$('input[type=range]').forEach((r) => r.addEventListener('input', () => paintRange(r)));
 
+  /** Click (or Enter on) a shown value to type an exact one: Enter or leaving the field applies, Esc cancels. */
+  function typeable(el, { get, set, min, max, decimals = 0 }) {
+    el.classList.add('typeable');
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+    const open = () => {
+      if (el.hidden) return;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.inputMode = 'decimal';
+      inp.className = 'inline-num';
+      inp.value = String(get());
+      inp.setAttribute('aria-label', el.title);
+      el.hidden = true;
+      el.after(inp);
+      inp.focus();
+      inp.select();
+      let done = false;
+      const close = (apply) => {
+        if (done) return;
+        done = true;
+        const v = parseFloat(inp.value.replace(',', '.'));
+        inp.remove();
+        el.hidden = false;
+        if (apply && isFinite(v)) set(clamp(+v.toFixed(decimals), min(), max()));
+        el.focus();
+      };
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); close(true); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false); }
+      });
+      inp.addEventListener('blur', () => close(true));
+    };
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  }
+
   const getPath = (o, p) => p.split('.').reduce((x, k) => (x == null ? x : x[k]), o);
   function setPath(o, p, v) {
     const ks = p.split('.'), last = ks.pop();
@@ -646,8 +683,9 @@
     $('#gauge-db').textContent = v === 0 ? '−∞ dB' : fmt.db(20 * Math.log10(v / 100));
     $$('#boost-presets .chip').forEach((c) => c.classList.toggle('active', +c.dataset.v === v));
   }
-  function setGain(v) {
-    audio.gain = clamp(Math.round(v / 5) * 5, 0, G.max);
+  /** `exact`: typed values and Shift+wheel keep 1% steps; everything else snaps to 5%. */
+  function setGain(v, exact) {
+    audio.gain = clamp(exact ? Math.round(v) : Math.round(v / 5) * 5, 0, G.max);
     boost.value = audio.gain;
     paintRange(boost);
     commit();
@@ -657,8 +695,11 @@
   $('#boost-inc').addEventListener('click', () => setGain(audio.gain + 10));
   $('.gauge').addEventListener('wheel', (e) => {
     e.preventDefault();
-    setGain(audio.gain + (e.deltaY < 0 ? 5 : -5));
+    const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
+    if (!d) return;
+    setGain(audio.gain + Math.sign(-d) * (e.shiftKey ? 1 : 5), e.shiftKey);
   }, { passive: false });
+  typeable($('#gauge-value'), { get: () => audio.gain, set: (v) => setGain(v, true), min: () => 0, max: () => G.max });
 
   // meters: dB → position matching the −48/−24/−12/−6/0 scale labels
   const MPTS = [[-48, 0], [-24, 25], [-12, 50], [-6, 75], [0, 100]];
@@ -740,6 +781,11 @@
     renderSpeed();
     commit();
   }));
+  typeable($('#fx-speed'), {
+    get: () => audio.fx.speed.value,
+    set: (v) => { audio.fx.speed.value = v; renderSpeed(); commit(); },
+    min: () => AE.SPEED_MIN, max: () => AE.SPEED_MAX, decimals: 2,
+  });
 
   /* =========================================================
      EQUALIZER

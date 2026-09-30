@@ -31,6 +31,7 @@
       'tab.mixer': 'Mixer',
       'tab.settings': 'Settings',
 
+      'boost.typeValue': 'Click to type a value',
       'boost.gain': 'Gain',
       'boost.limiter': 'Limiter',
       'boost.limiterDesc': 'Prevents distortion and clipping',
@@ -211,6 +212,7 @@
       'tab.mixer': 'Микшер',
       'tab.settings': 'Настройки',
 
+      'boost.typeValue': 'Нажмите, чтобы ввести значение',
       'boost.gain': 'Усиление',
       'boost.limiter': 'Лимитер',
       'boost.limiterDesc': 'Защита от хрипа и клиппинга',
@@ -391,6 +393,7 @@
       'tab.mixer': 'Мікшер',
       'tab.settings': 'Налаштування',
 
+      'boost.typeValue': 'Натисніть, щоб ввести значення',
       'boost.gain': 'Підсилення',
       'boost.limiter': 'Лімітер',
       'boost.limiterDesc': 'Захист від хрипіння та кліпінгу',
@@ -571,6 +574,7 @@
       'tab.mixer': 'Mixer',
       'tab.settings': 'Optionen',
 
+      'boost.typeValue': 'Klicken, um einen Wert einzugeben',
       'boost.gain': 'Verstärkung',
       'boost.limiter': 'Limiter',
       'boost.limiterDesc': 'Schützt vor Verzerrung und Clipping',
@@ -751,6 +755,7 @@
       'tab.mixer': 'Mixer',
       'tab.settings': 'Impostazioni',
 
+      'boost.typeValue': 'Clicca per inserire un valore',
       'boost.gain': 'Guadagno',
       'boost.limiter': 'Limiter',
       'boost.limiterDesc': 'Evita distorsione e clipping',
@@ -931,6 +936,7 @@
       'tab.mixer': 'Mixeur',
       'tab.settings': 'Paramètres',
 
+      'boost.typeValue': 'Cliquez pour saisir une valeur',
       'boost.gain': 'Gain',
       'boost.limiter': 'Limiteur',
       'boost.limiterDesc': 'Évite la distorsion et l’écrêtage',
