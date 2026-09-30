@@ -15,7 +15,9 @@
    A change is stored as the site's speed, like the popup slider.
 
    Badge: "1.5×" over the playing video for about a second whenever
-   the speed changes — no permanent overlay.
+   the speed changes — no permanent overlay. For media of a minute or
+   longer at a speed other than 1× it adds the time left at that speed
+   ("1.5× · −12:30"), without words, so it needs no translation.
    ========================================================= */
 (() => {
   'use strict';
@@ -130,6 +132,15 @@
       return { x: Math.max(8, r.left + 12), y: Math.max(8, r.top + 12) };
     }
 
+    /** " · −12:30": how long the media still plays at speed `v` ('' when it doesn't help). */
+    function timeLeft(v) {
+      const el = target();
+      if (!el || v === 1 || !isFinite(el.duration) || el.duration < 60) return '';
+      const t = Math.round(Math.max(0, el.duration - el.currentTime) / v);
+      const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = String(t % 60).padStart(2, '0');
+      return ' · −' + (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + sec;
+    }
+
     function badge(v) {
       const app = env.app();
       if (!app || !app.speedBadge || document.hidden || !mediaHere()) return;
@@ -153,7 +164,7 @@
       const p = anchor();
       box.host.style.left = p.x + 'px';
       box.host.style.top = p.y + 'px';
-      box.d.textContent = String(+(+v).toFixed(2)) + '×';
+      box.d.textContent = String(+(+v).toFixed(2)) + '×' + timeLeft(v);
       box.d.classList.remove('out');
       clearTimeout(timer);
       timer = setTimeout(() => {

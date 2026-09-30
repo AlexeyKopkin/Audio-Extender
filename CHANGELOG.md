@@ -16,7 +16,7 @@ Chrome and Edge.
   - Not available on Firefox for Android
 - Playback speed from 0.1× to 16×; the slider has a log scale, so the usual speeds around 1× stay easy to set. Firefox plays sound only between 0.125× and 8×; outside that range the popup says so
 - Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. The step (0.05 / 0.1 / 0.25) and the jump (5 / 10 / 15 / 30 s) can be changed. The keys work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
-- A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off)
+- A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off); for videos of a minute or longer it also shows the time left at that speed ("1.5× · −12:30")
 - Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
 - Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
 - Shortcuts for speed faster / slower / back to 1× that work without clicking into the page; they have no keys by default — set them in the browser's extension shortcuts
