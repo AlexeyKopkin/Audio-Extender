@@ -52,6 +52,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
       mono: { on: false },
       balance: { value: 0 },
       speed: { value: 1, pitch: true },
+      shift: { on: false, semitones: 0 }, // pitch shift, independent of the speed (-12 … +12)
     },
   };
 
@@ -196,10 +197,12 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   /** True when the audio graph must actually change the sound. At neutral settings the page's audio
    *  is left untouched: routing it anyway is where audio extensions break sites and cost CPU. */
+  const shiftActive = (s) => !!(s.fx.shift && s.fx.shift.on && s.fx.shift.semitones);
+
   function needsProcessing(s) {
     if (!s.enabled) return false;
     return s.gain !== 100 || eqActive(s) || !!s.autoeq.id ||
-      s.fx.dialog.on || s.fx.night.on || s.fx.bass.on || s.fx.norm.on || matrixActive(s);
+      s.fx.dialog.on || s.fx.night.on || s.fx.bass.on || s.fx.norm.on || matrixActive(s) || shiftActive(s);
   }
 
   /** Parse an AutoEq "ParametricEQ.txt" file. */

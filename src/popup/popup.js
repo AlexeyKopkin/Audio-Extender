@@ -56,6 +56,7 @@
     db: (v) => minus((v > 0 ? '+' : '') + (+v).toFixed(1) + ' dB'),
     lufs: (v) => minus(v + ' LUFS'),
     speed: (v) => (+v).toFixed(2) + '×',
+    semi: (v) => minus((+v > 0 ? '+' : '') + v), // semitones: the unit is in the slider's tooltip and scale
     bal: (v) => (+v === 0 ? tr('fx.center') : (v < 0 ? 'L ' : 'R ') + Math.abs(v) + '%'),
     hz: (f) => (f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 1 : 2) + ' kHz' : Math.round(f) + ' Hz'),
   };

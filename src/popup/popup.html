@@ -25,6 +25,7 @@
   <symbol id="i-stereo" viewBox="0 0 24 24"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M3 12h18"/></symbol>
   <symbol id="i-mono" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M5 5l4 4M19 5l-4 4M5 19l4-4M19 19l-4-4"/></symbol>
   <symbol id="i-balance" viewBox="0 0 24 24"><path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
   <symbol id="i-level" viewBox="0 0 24 24"><path d="M3 18h4V9H3zM10 18h4V4h-4zM17 18h4v-6h-4z"/></symbol>
   <symbol id="i-speed" viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
   <symbol id="i-volume-x" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></symbol>
@@ -320,6 +321,14 @@
             <output class="pill" id="fx-bal"></output>
           </div>
           <div class="lr"><b>L</b><input type="range" class="range-center" min="-100" max="100" value="0" data-bind="fx.balance.value" data-out="fx-bal" data-fmt="bal"><b>R</b></div>
+        </div>
+
+        <div class="card fx wide" id="shift-card">
+          <div class="fx-head">
+            <div class="head-title"><span class="bubble"><svg class="ic"><use href="#i-note"/></svg></span><div><h3 data-i18n="fx.shift">Pitch</h3><p class="sub" data-i18n="fx.shiftDesc">Higher or lower voice and music, at any speed</p></div></div>
+            <div class="shift-right"><output class="pill" id="fx-shift"></output><label class="switch"><input type="checkbox" data-bind="fx.shift.on"><span></span></label></div>
+          </div>
+          <div class="lr"><b>−12</b><input type="range" class="range-center" min="-12" max="12" step="1" value="0" data-bind="fx.shift.semitones" data-out="fx-shift" data-fmt="semi" data-i18n-title="fx.semitones"><b>+12</b></div>
         </div>
 
         <div class="card fx wide on">

@@ -2,7 +2,7 @@
    Audio Extender — processing chain (shared)
 
    One Chain per AudioContext:
-     input → AutoEq → EQ → bass → dialogue → night → stereo matrix
+     input → pitch shift → AutoEq → EQ → bass → dialogue → night → stereo matrix
            → normalization → boost → limiter → clipper → out → destination
 
    Loaded right before content/page.js in the page's MAIN world, and by the
@@ -133,9 +133,16 @@
         this.aeFilters = env.active && env.S.autoeq.id ? env.S.autoeq.filters.map(() => ctx.createBiquadFilter()) : [];
         this.eqFilters = env.active && env.S.eq.on ? eqFilterSpecs().map(() => ctx.createBiquadFilter()) : [];
 
+        // the pitch shifter runs looping sources: it only exists while it is used
+        const shift = env.active && shiftOn();
+        if (!shift && this.pitch) { this.pitch.stop(); this.pitch = null; }
+        if (shift && !this.pitch) this.pitch = createPitchShifter(ctx);
+        if (this.pitch) try { origDisconnect.call(this.pitch.output); } catch { /* not connected */ }
+
         let cur = this.input;
         const link = (n) => { origConnect.call(cur, n); cur = n; };
         if (env.active) {
+          if (this.pitch) { origConnect.call(cur, this.pitch.input); cur = this.pitch.output; }
           if (this.aeFilters.length) { link(this.aePre); this.aeFilters.forEach(link); }
           if (this.eqFilters.length) { link(this.eqPre); this.eqFilters.forEach(link); }
           if (env.S.fx.bass.on) link(this.bass);
@@ -163,6 +170,7 @@
         const set = (param, v) => param.setTargetAtTime(v, t, T);
         set(this.out.gain, env.duck);
         if (!env.active) return;
+        if (this.pitch) this.pitch.set(env.S.fx.shift.semitones);
 
         if (this.aeFilters.length) {
           set(this.aePre.gain, dbToLin(env.S.autoeq.preamp));
@@ -315,7 +323,7 @@
         else origPlay.call(this.sinkEl).catch(() => {});
       }
 
-      close() { clearInterval(this.agcTimer); if (this.sinkEl) this.sinkToDestination(); }
+      close() { clearInterval(this.agcTimer); if (this.pitch) this.pitch.stop(); if (this.sinkEl) this.sinkToDestination(); }
     }
 
     function setFilter(node, spec, set) {
@@ -347,6 +355,58 @@
     const G10 = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
     const G31 = [20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000];
 
+    const shiftOn = () => !!(env.S.fx.shift && env.S.fx.shift.on && env.S.fx.shift.semitones);
+
+    /**
+     * Pitch shift without changing the speed, from standard nodes only (nothing to load into the page):
+     * two delay lines whose delay time ramps steadily (a Doppler shift), each faded out while it jumps
+     * back, the other one covering. Ratio = 1 + depth slope: see `set`.
+     */
+    function createPitchShifter(ctx) {
+      const DELAY = 0.1, FADE = 0.05, CYCLE = 0.1;
+      const sr = ctx.sampleRate, len = Math.round(CYCLE * sr), fadeLen = Math.round(FADE * sr);
+      const buffer = (fill) => {
+        const b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = fill(i);
+        return b;
+      };
+      const rampDown = buffer((i) => i / len);           // growing delay: lower pitch
+      const rampUp = buffer((i) => (len - i) / len);     // shrinking delay: higher pitch
+      // linear fades: the two taps carry the same (shifted) sound, so their gains must add up to 1, not their powers
+      const fade = buffer((i) => (i < fadeLen ? i / fadeLen : Math.max(0, 1 - (i - fadeLen) / fadeLen)));
+      const gain = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+      const loop = (b) => { const s = ctx.createBufferSource(); s.buffer = b; s.loop = true; return s; };
+      const input = gain(1), output = gain(1);
+      const lines = [0, 1].map(() => {
+        const delay = ctx.createDelay(1), mix = gain(0), depth = gain(0), downG = gain(1), upG = gain(0);
+        const sources = [loop(rampDown), loop(rampUp), loop(fade)];
+        origConnect.call(sources[0], downG); origConnect.call(sources[1], upG);
+        origConnect.call(downG, depth); origConnect.call(upG, depth);
+        origConnect.call(depth, delay.delayTime);
+        origConnect.call(sources[2], mix.gain);
+        origConnect.call(input, delay); origConnect.call(delay, mix); origConnect.call(mix, output);
+        return { depth, downG, upG, sources };
+      });
+      const t = ctx.currentTime + 0.05;
+      lines.forEach((l, i) => l.sources.forEach((s) => s.start(t + i * (CYCLE - FADE))));
+      return {
+        input, output,
+        set(semitones) {
+          // the delay changes by 0.5·DELAY·|m| per CYCLE (= DELAY): pitch ratio r = 1 ± |m|/2
+          const r = Math.pow(2, semitones / 12), m = 2 * (r - 1);
+          for (const l of lines) {
+            l.downG.gain.value = m > 0 ? 0 : 1;
+            l.upG.gain.value = m > 0 ? 1 : 0;
+            l.depth.gain.setTargetAtTime(0.5 * DELAY * Math.abs(m), ctx.currentTime, 0.01);
+          }
+        },
+        stop() {
+          for (const l of lines) for (const s of l.sources) { try { s.stop(); } catch { /* not started */ } }
+          try { origDisconnect.call(input); origDisconnect.call(output); } catch { /* ignore */ }
+        },
+      };
+    }
+
     function matrixOn() {
       return env.S.fx.mono.on || (env.S.fx.width.on && env.S.fx.width.value !== 100) || env.S.fx.balance.value !== 0;
     }
@@ -356,7 +416,7 @@
       return JSON.stringify([
         env.S.autoeq.id ? env.S.autoeq.filters.map((f) => f.type) : 0,
         env.S.eq.on ? eqFilterSpecs().map((f) => f.type) : 0,
-        env.S.fx.bass.on, env.S.fx.dialog.on, env.S.fx.night.on, matrixOn(), env.S.fx.norm.on, env.S.limiter.on,
+        env.S.fx.bass.on, env.S.fx.dialog.on, env.S.fx.night.on, matrixOn(), env.S.fx.norm.on, env.S.limiter.on, shiftOn(),
       ]);
     }
 
