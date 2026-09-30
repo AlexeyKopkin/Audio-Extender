@@ -139,11 +139,10 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     return s.fx.mono.on || (s.fx.width.on && s.fx.width.value !== 100) || s.fx.balance.value !== 0;
   }
 
-  /** True when the audio graph must actually change the sound. */
+  /** True when the page's audio goes through the chain: whenever processing is on — also at
+   *  neutral settings, so the meters show the sound and the limiter guards it. Power off: untouched. */
   function needsProcessing(s) {
-    if (!s.enabled) return false;
-    return s.gain !== 100 || eqActive(s) || !!s.autoeq.id ||
-      s.fx.dialog.on || s.fx.night.on || s.fx.bass.on || s.fx.norm.on || matrixActive(s);
+    return !!s.enabled;
   }
 
   /** Parse an AutoEq "ParametricEQ.txt" file. */
