@@ -308,6 +308,7 @@
     renderMaxGain();
     renderAllow();
     renderMatch();
+    renderSync();
   }
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
@@ -461,6 +462,31 @@
     if (link) link.post({ type: 'live', settings: audio });
     renderBindings(); // the Effects normalization card shows the shared target
   });
+
+  /* Settings sync through the browser account (background.js does the work) */
+  async function renderSync() {
+    $('#row-sync').classList.toggle('hidden', !API.canSync);
+    if (!API.canSync) return;
+    $('#sync-on').checked = !!data.app.sync;
+    const hint = $('#sync-hint');
+    let st = { error: '' };
+    if (data.app.sync) { try { st = await API.syncState(); } catch { /* background asleep */ } }
+    hint.textContent = st.error ? tr('set.syncFull') : tr('set.syncHint');
+    hint.classList.toggle('error', !!st.error);
+    hint.classList.toggle('hidden', !data.app.sync);
+  }
+  $('#sync-on').addEventListener('change', async (e) => {
+    const on = e.target.checked;
+    $('#sync-choice').classList.add('hidden');
+    if (!on) { await API.setSync(false); return; }
+    e.target.checked = false; // stays off until we know which settings win
+    let st = { hasData: false };
+    try { st = await API.syncState(); } catch { /* none */ }
+    if (st.hasData) $('#sync-choice').classList.remove('hidden');
+    else await API.setSync(true, 'this');
+  });
+  $('#sync-take').addEventListener('click', async () => { $('#sync-choice').classList.add('hidden'); await API.setSync(true, 'synced'); });
+  $('#sync-push').addEventListener('click', async () => { $('#sync-choice').classList.add('hidden'); await API.setSync(true, 'this'); });
 
   function renderMaxGain() {
     setHTML($('#max-gain'), AE.GAIN_CAPS.map((v) => `<option value="${v}">${v}%</option>`).join(''));

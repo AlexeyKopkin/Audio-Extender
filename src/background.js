@@ -59,6 +59,8 @@ function handleMessage(msg, sender) {
     return browser.storage.local.set(patch);
   }
   if (msg.type === 'inject' && typeof msg.tabId === 'number') return injectTab(msg.tabId);
+  if (msg.type === 'sync-state') return syncState();
+  if (msg.type === 'sync-set') return setSync(!!msg.on, msg.mode);
   return undefined;
 }
 // sendResponse + `return true` instead of returning a Promise: works the same in Firefox and Chrome.
@@ -175,10 +177,95 @@ async function updateDucking() {
   }
 }
 
+/* ---------- settings sync (opt-in: Settings → Sync) ----------
+   storage.sync holds the app settings (without the per-device ones), defaults, EQ presets, sound profiles
+   and one item per site ('site:<host>'): one item may hold 8 KB, all sites together would not fit.
+   Output devices never leave the device (their ids only mean something in this browser profile).
+   Local edits are pushed ~1.5 s later; changes from another device are pulled when they arrive. */
+const SYNC_LOCAL_APP = ['sidebar', 'sync'];
+const SITE_ITEM = 'site:';
+let syncTimer = 0;
+const pushed = new Map(); // item → JSON we wrote, to tell our own writes from another device's
+const pulled = new Map(); // local key → JSON that came from the account: not an edit to send back
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function syncItems(d) {
+  const app = { ...d.app };
+  for (const k of SYNC_LOCAL_APP) delete app[k];
+  const out = { app, defaults: d.defaults, presets: d.presets, soundProfiles: d.soundProfiles };
+  for (const [h, s] of Object.entries(d.sites)) out[SITE_ITEM + h] = s;
+  return out;
+}
+
+async function pushSync() {
+  syncTimer = 0;
+  const d = AE.normalize(await browser.storage.local.get(AE.KEYS));
+  if (!d.app.sync) return;
+  const want = syncItems(d), have = await browser.storage.sync.get(null);
+  const set = {};
+  for (const k of Object.keys(want)) if (!same(want[k], have[k])) { set[k] = want[k]; pushed.set(k, JSON.stringify(want[k])); }
+  const gone = Object.keys(have).filter((k) => k.startsWith(SITE_ITEM) && !(k in want));
+  try {
+    if (gone.length) await browser.storage.sync.remove(gone);
+    if (Object.keys(set).length) await browser.storage.sync.set(set);
+    await browser.storage.session.set({ syncError: '' });
+  } catch (e) {
+    await browser.storage.session.set({ syncError: String((e && e.message) || e) }); // usually the quota
+  }
+}
+
+async function pullSync() {
+  const have = await browser.storage.sync.get(null);
+  if (!have.app) return;
+  const local = AE.normalize(await browser.storage.local.get(AE.KEYS));
+  const sites = {};
+  for (const [k, v] of Object.entries(have)) if (k.startsWith(SITE_ITEM)) sites[k.slice(SITE_ITEM.length)] = v;
+  const next = {
+    app: { ...local.app, ...have.app, sidebar: local.app.sidebar, sync: local.app.sync },
+    defaults: have.defaults || local.defaults,
+    presets: have.presets || [],
+    soundProfiles: have.soundProfiles || [],
+    sites,
+  };
+  const patch = {};
+  for (const k of Object.keys(next)) if (!same(next[k], local[k])) { patch[k] = next[k]; pulled.set(k, JSON.stringify(next[k])); }
+  if (Object.keys(patch).length) await browser.storage.local.set(patch);
+}
+
+/** Switch sync on ('this': this device's settings go up, 'synced': the account's come down) or off. */
+async function setSync(on, mode) {
+  const local = AE.normalize(await browser.storage.local.get(AE.KEYS));
+  await browser.storage.local.set({ app: { ...local.app, sync: on } });
+  if (!on) return { ok: true };
+  if (mode === 'synced') await pullSync();
+  else await pushSync();
+  return { ok: true };
+}
+
+async function syncState() {
+  const [{ app }, { syncError }] = await Promise.all([browser.storage.sync.get('app'), browser.storage.session.get('syncError')]);
+  return { hasData: !!app, error: syncError || '' };
+}
+
+function schedulePush() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => pushSync().catch(() => {}), 1500);
+}
+
 /* ---------- storage ---------- */
 browser.storage.onChanged.addListener(async (changes, area) => {
+  if (area === 'sync') {
+    // another device changed something (our own writes come back here too: skip those)
+    const foreign = Object.keys(changes).some((k) => pushed.get(k) !== JSON.stringify(changes[k].newValue));
+    await ready;
+    if (foreign && data.app.sync && !syncTimer) pullSync().catch(() => {});
+    return;
+  }
   if (area !== 'local' || !AE.KEYS.some((k) => k in changes)) return;
   await (ready = loadData());
+  const edited = Object.keys(changes).filter((k) => k !== 'outputs' && pulled.get(k) !== JSON.stringify(changes[k].newValue));
+  pulled.clear();
+  if (data.app.sync && edited.length) schedulePush();
   if (changes.app) {
     applySidebarMode();
     updateDucking();

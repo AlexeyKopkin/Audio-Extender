@@ -409,6 +409,12 @@
         <div class="toggle-row"><span data-i18n="set.badge">Show gain on the toolbar icon</span><label class="switch"><input type="checkbox" data-app="badge"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.animations">Spectrum and meter animations</span><label class="switch"><input type="checkbox" data-app="animations"><span></span></label></div>
         <div class="toggle-row" id="row-sidebar"><span data-i18n="set.sidebar">Open in sidebar</span><label class="switch"><input type="checkbox" data-app="sidebar"><span></span></label></div>
+        <div class="toggle-row" id="row-sync"><span data-i18n="set.sync">Sync settings with your browser account</span><label class="switch"><input type="checkbox" id="sync-on"><span></span></label></div>
+        <div class="sync-choice hidden" id="sync-choice">
+          <p class="sub" data-i18n="set.syncChoice">Your account already has settings from another device. Which ones should be kept?</p>
+          <div class="btn-row"><button class="btn small" id="sync-take" data-i18n="set.syncTake">Use the synced ones</button><button class="btn small" id="sync-push" data-i18n="set.syncPush">Use this device’s</button></div>
+        </div>
+        <p class="sub sync-hint hidden" id="sync-hint"></p>
       </div>
 
       <div class="card compact hidden" id="allow-card">
