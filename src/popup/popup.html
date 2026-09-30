@@ -299,10 +299,11 @@
           <input type="range" min="0" max="200" value="130" data-bind="fx.width.value" data-out="fx4" data-fmt="pct">
         </div>
 
-        <div class="card fx">
+        <div class="card fx" id="norm-card">
           <div class="fx-head"><span class="bubble"><svg class="ic"><use href="#i-level"/></svg></span><label class="switch"><input type="checkbox" data-bind="fx.norm.on"><span></span></label></div>
           <h3 data-i18n="fx.norm">Normalization</h3>
           <p class="sub" data-i18n="fx.normDesc">Same loudness across different videos</p>
+          <p class="sub norm-note hidden" id="norm-note" data-i18n="mixer.matchNote">Set for all tabs in the Mixer</p>
           <div class="row-label"><span data-i18n="fx.target">Target</span><output id="fx5"></output></div>
           <input type="range" min="-24" max="-8" value="-14" data-bind="fx.norm.target" data-out="fx5" data-fmt="lufs">
         </div>
@@ -372,6 +373,11 @@
 
       <div class="card compact">
         <div class="toggle-row"><span data-i18n="mixer.duck">Lower other tabs while audio plays here</span><label class="switch"><input type="checkbox" data-app="duck"><span></span></label></div>
+        <div class="toggle-row"><span data-i18n="mixer.match">Same loudness in all tabs</span><label class="switch"><input type="checkbox" data-app="matchLoudness"><span></span></label></div>
+        <div class="match-target hidden" id="match-row">
+          <div class="row-label"><span data-i18n="fx.target">Target</span><output id="match-out"></output></div>
+          <input type="range" id="match-target" min="-24" max="-8" step="1" value="-16">
+        </div>
         <div class="toggle-row"><span data-i18n="mixer.showSilent">Also show tabs without audio</span><label class="switch"><input type="checkbox" data-app="showSilent"><span></span></label></div>
       </div>
     </section>

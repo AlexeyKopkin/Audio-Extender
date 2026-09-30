@@ -216,6 +216,9 @@
     });
     updateGauge();
     renderUnheard();
+    const matched = !!data.app.matchLoudness;
+    $('#norm-card').classList.toggle('locked', matched);
+    $('#norm-note').classList.toggle('hidden', !matched);
     renderSpeed();
     const pw = $('#btn-power');
     pw.classList.toggle('on', audio.enabled);
@@ -289,7 +292,7 @@
     data.app[key] = el.checked;
     saveApp();
     if (key === 'speedKeys') renderSpeedKeys();
-    if (key === 'perSite' || key === 'autoEnable') {
+    if (key === 'perSite' || key === 'autoEnable' || key === 'matchLoudness') {
       audio = AE.effective(data, host);
       if (link) link.post({ type: 'live', settings: audio });
       renderAll();
@@ -304,6 +307,7 @@
     renderSpeedKeys();
     renderMaxGain();
     renderAllow();
+    renderMatch();
   }
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
@@ -439,6 +443,24 @@
     if (e.target.closest('[data-del]')) setAllowed(e.target.closest('.site-row').dataset.host, false);
   });
   $('#allow-add').addEventListener('click', () => setAllowed(host, true));
+
+  /* Mixer: same loudness in all tabs (normalization with one target, see AE.effective) */
+  function renderMatch() {
+    const on = !!data.app.matchLoudness;
+    $('#match-row').classList.toggle('hidden', !on);
+    const r = $('#match-target');
+    r.value = data.app.matchTarget ?? -16;
+    paintRange(r);
+    $('#match-out').textContent = fmt.lufs(+r.value);
+  }
+  $('#match-target').addEventListener('input', (e) => {
+    data.app.matchTarget = +e.target.value;
+    $('#match-out').textContent = fmt.lufs(+e.target.value);
+    saveApp();
+    audio = AE.effective(data, host);
+    if (link) link.post({ type: 'live', settings: audio });
+    renderBindings(); // the Effects normalization card shows the shared target
+  });
 
   function renderMaxGain() {
     setHTML($('#max-gain'), AE.GAIN_CAPS.map((v) => `<option value="${v}">${v}%</option>`).join(''));
