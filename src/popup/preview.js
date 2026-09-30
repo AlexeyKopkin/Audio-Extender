@@ -155,6 +155,9 @@
         { name: 'gain-up', shortcut: 'Alt+Shift+Up' },
         { name: 'gain-down', shortcut: 'Alt+Shift+Down' },
         { name: 'toggle', shortcut: 'Alt+Shift+B' },
+        { name: 'speed-up', shortcut: '' },
+        { name: 'speed-down', shortcut: '' },
+        { name: 'speed-reset', shortcut: '' },
       ];
     },
     async openTab(url) { window.open(url, '_blank', 'noopener'); },

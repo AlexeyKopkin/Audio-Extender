@@ -16,5 +16,14 @@
   },
   "cmdToggle": {
     "message": "Activer / désactiver le traitement"
+  },
+  "cmdSpeedUp": {
+    "message": "Vitesse : plus rapide"
+  },
+  "cmdSpeedDown": {
+    "message": "Vitesse : plus lente"
+  },
+  "cmdSpeedReset": {
+    "message": "Vitesse : 1×"
   }
 }

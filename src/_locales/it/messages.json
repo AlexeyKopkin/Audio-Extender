@@ -16,5 +16,14 @@
   },
   "cmdToggle": {
     "message": "Attiva / disattiva l’elaborazione"
+  },
+  "cmdSpeedUp": {
+    "message": "Velocità: più veloce"
+  },
+  "cmdSpeedDown": {
+    "message": "Velocità: più lenta"
+  },
+  "cmdSpeedReset": {
+    "message": "Velocità: 1×"
   }
 }

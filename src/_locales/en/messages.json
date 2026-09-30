@@ -16,5 +16,14 @@
   },
   "cmdToggle": {
     "message": "Toggle processing"
+  },
+  "cmdSpeedUp": {
+    "message": "Speed: faster"
+  },
+  "cmdSpeedDown": {
+    "message": "Speed: slower"
+  },
+  "cmdSpeedReset": {
+    "message": "Speed: back to 1×"
   }
 }

@@ -1444,7 +1444,10 @@
   });
 
   async function renderHotkeys() {
-    const names = { _execute_action: 'set.hk.open', 'gain-up': 'set.hk.up', 'gain-down': 'set.hk.down', toggle: 'set.hk.toggle' };
+    const names = {
+      _execute_action: 'set.hk.open', 'gain-up': 'set.hk.up', 'gain-down': 'set.hk.down', toggle: 'set.hk.toggle',
+      'speed-up': 'set.hk.speedUp', 'speed-down': 'set.hk.speedDown', 'speed-reset': 'set.hk.speedReset',
+    };
     const arrows = { Up: '↑', Down: '↓', Left: '←', Right: '→' };
     let cmds = [];
     try { cmds = await API.commands(); } catch { /* ignore */ }
