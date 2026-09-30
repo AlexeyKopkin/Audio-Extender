@@ -19,6 +19,7 @@ Chrome and Edge.
 - A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off)
 - Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
 - Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
+- Optional: Shift + mouse wheel over a video changes the speed (Effects → Playback speed, off by default)
 - Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
 - Maximum volume (Settings): 150 / 200 / 300 / 400 / 600%. Nothing plays louder than that — not the slider, the Mixer, the shortcut, or a site saved or imported with a higher level
 - A paused tab no longer keeps the computer awake: audio processing goes to sleep after 10 seconds without playback and wakes up with the next play

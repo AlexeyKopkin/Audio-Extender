@@ -57,6 +57,7 @@
     data = await browser.storage.local.get(AE.KEYS);
     setSettings(AE.effective(data, host));
     output.refresh();
+    speed.sync();
   }
 
   browser.storage.onChanged.addListener((changes, area) => {
