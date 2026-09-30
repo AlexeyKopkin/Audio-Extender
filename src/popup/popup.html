@@ -70,8 +70,20 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="icon-btn" id="btn-profiles" data-i18n-title="prof.title" aria-haspopup="menu" aria-expanded="false"><svg class="ic"><use href="#i-sliders"/></svg></button>
       <button class="icon-btn" id="btn-reset" data-i18n-title="app.reset"><svg class="ic"><use href="#i-reset"/></svg></button>
       <button class="power-btn on" id="btn-power" data-i18n-title="app.power" aria-pressed="true"><svg class="ic"><use href="#i-power"/></svg></button>
+    </div>
+    <div class="prof-menu hidden" id="prof-menu" role="menu">
+      <div class="prof-head" data-i18n="prof.title">Sound profiles</div>
+      <div id="prof-list"></div>
+      <div class="field-row prof-save hidden" id="prof-save-row">
+        <input class="text-input grow" id="prof-name" maxlength="40" data-i18n-placeholder="prof.name">
+        <button class="btn small primary" id="prof-save-ok" data-i18n="eq.save">Save</button>
+      </div>
+      <button class="prof-item" id="prof-save"><svg class="ic xs"><use href="#i-plus"/></svg><span data-i18n="prof.saveSite">Save this site as a profile…</span></button>
+      <button class="prof-item" id="prof-default"><svg class="ic xs"><use href="#i-star"/></svg><span data-i18n="prof.makeDefault">Use as default for new sites</span></button>
+      <p class="sub prof-msg hidden" id="prof-msg"></p>
     </div>
   </header>
 

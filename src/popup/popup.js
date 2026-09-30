@@ -480,6 +480,77 @@
     $('#site-chip .dot').classList.toggle('live', kind === 'web' && audio.enabled && (status.deep || status.sources + status.playing > 0));
   }
 
+  /* ---------------------------------------------------------
+     Sound profiles: all audio settings of a site under a name, applied to any site in one click
+     --------------------------------------------------------- */
+  const profMenu = $('#prof-menu');
+  function profMsg(text) {
+    const m = $('#prof-msg');
+    m.textContent = text;
+    m.classList.toggle('hidden', !text);
+  }
+  function renderProfMenu() {
+    const list = data.soundProfiles;
+    setHTML($('#prof-list'), list.length
+      ? list.map((p) => `<div class="prof-row"><button class="prof-item" data-apply="${esc(p.id)}"><span class="grow"><b>${esc(p.name)}</b><span class="tags">${esc(audioTags({ ...AE.merge(AE.DEFAULT_AUDIO, p.audio), enabled: true }).join(' · '))}</span></span></button><button class="icon-btn sm danger" data-del="${esc(p.id)}" title="${esc(tr('eq.deletePreset'))}"><svg class="ic"><use href="#i-trash"/></svg></button></div>`).join('')
+      : `<div class="prof-empty">${esc(tr('prof.empty'))}</div>`);
+    const web = kind === 'web' && AE.siteAllowed(data.app, host);
+    $('#prof-save').classList.toggle('hidden', !web);
+    $('#prof-default').classList.toggle('hidden', !web || !data.app.perSite); // without per-site memory the defaults are what you edit
+    $$('#prof-list [data-apply]').forEach((b) => { b.disabled = !web; });
+  }
+  function toggleProfMenu(open = profMenu.classList.contains('hidden')) {
+    profMenu.classList.toggle('hidden', !open);
+    $('#btn-profiles').setAttribute('aria-expanded', open);
+    $('#prof-save-row').classList.add('hidden');
+    profMsg('');
+    if (open) renderProfMenu();
+  }
+  $('#btn-profiles').addEventListener('click', (e) => { e.stopPropagation(); toggleProfMenu(); });
+  document.addEventListener('click', (e) => { if (!profMenu.contains(e.target)) toggleProfMenu(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !profMenu.classList.contains('hidden')) { e.preventDefault(); toggleProfMenu(false); } });
+  $('#prof-list').addEventListener('click', (e) => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      data.soundProfiles = data.soundProfiles.filter((p) => p.id !== del.dataset.del);
+      API.persist({ soundProfiles: data.soundProfiles });
+      renderProfMenu();
+      return;
+    }
+    const b = e.target.closest('[data-apply]');
+    if (!b) return;
+    const p = data.soundProfiles.find((x) => x.id === b.dataset.apply);
+    if (!p) return;
+    audio = { ...AE.merge(AE.DEFAULT_AUDIO, p.audio), enabled: true };
+    audio.gain = Math.min(audio.gain, AE.gainCap(data.app));
+    renderBindings();
+    renderAll();
+    commit();
+    toggleProfMenu(false);
+  });
+  $('#prof-save').addEventListener('click', () => {
+    $('#prof-save-row').classList.remove('hidden');
+    $('#prof-name').value = host || '';
+    $('#prof-name').focus();
+    $('#prof-name').select();
+  });
+  function saveProfile() {
+    const name = $('#prof-name').value.trim() || `${tr('prof.title')} ${data.soundProfiles.length + 1}`;
+    const { enabled, ...snapshot } = AE.clone(audio); // applying a profile always switches processing on
+    data.soundProfiles = [...data.soundProfiles, { id: Date.now().toString(36), name, audio: snapshot }];
+    API.persist({ soundProfiles: data.soundProfiles });
+    $('#prof-save-row').classList.add('hidden');
+    renderProfMenu();
+    profMsg(tr('prof.saved', { name }));
+  }
+  $('#prof-save-ok').addEventListener('click', saveProfile);
+  $('#prof-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveProfile(); } });
+  $('#prof-default').addEventListener('click', () => {
+    data.defaults = { ...AE.clone(audio), enabled: true };
+    API.persist({ defaults: data.defaults });
+    profMsg(tr('prof.defaultSaved'));
+  });
+
   $('#btn-power').addEventListener('click', () => {
     audio.enabled = !audio.enabled;
     commit();
@@ -1550,6 +1621,19 @@
   /* =========================================================
      SETTINGS
      ========================================================= */
+  /** Short description of a set of audio settings ("250%", "Night mode", "1.50×"…). */
+  function audioTags(s) {
+    const tags = [];
+    tags.push(s.enabled ? s.gain + '%' : tr('app.processingOff'));
+    if (AE.eqActive(s)) tags.push(tr('tab.eq'));
+    if (s.autoeq.id) tags.push(s.autoeq.name);
+    for (const [k, key] of [['dialog', 'fx.dialog'], ['night', 'fx.night'], ['bass', 'fx.bass'], ['width', 'fx.width'], ['norm', 'fx.norm'], ['mono', 'fx.mono']]) {
+      if (s.fx[k].on) tags.push(tr(key));
+    }
+    if (s.fx.speed.value !== 1) tags.push(fmt.speed(s.fx.speed.value));
+    return tags;
+  }
+
   function renderProfiles() {
     const hosts = Object.keys(data.sites).sort();
     $('#profiles-count').textContent = hosts.length;
@@ -1557,14 +1641,7 @@
     if (!hosts.length) { setHTML(box, `<div class="empty">${esc(tr('set.noProfiles'))}</div>`); return; }
     setHTML(box, hosts.map((h) => {
       const s = AE.effective({ ...data, app: { ...data.app, perSite: true, siteMode: 'all' } }, h); // what is stored, allowed or not
-      const tags = [];
-      tags.push(s.enabled ? s.gain + '%' : tr('app.processingOff'));
-      if (AE.eqActive(s)) tags.push(tr('tab.eq'));
-      if (s.autoeq.id) tags.push(s.autoeq.name);
-      for (const [k, key] of [['dialog', 'fx.dialog'], ['night', 'fx.night'], ['bass', 'fx.bass'], ['width', 'fx.width'], ['norm', 'fx.norm'], ['mono', 'fx.mono']]) {
-        if (s.fx[k].on) tags.push(tr(key));
-      }
-      if (s.fx.speed.value !== 1) tags.push(fmt.speed(s.fx.speed.value));
+      const tags = audioTags(s);
       return `<div class="site-row" data-host="${esc(h)}">${letterBadge(h, 'sm')}<div class="grow"><b>${esc(h)}</b><div class="tags">${tags.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><button class="icon-btn sm danger" data-del><svg class="ic"><use href="#i-trash"/></svg></button></div>`;
     }).join(''));
   }
@@ -1608,7 +1685,7 @@
   }
   $('#btn-export').addEventListener('click', () => {
     flush();
-    const payload = { format: 'audio-extender', version: 1, app: data.app, defaults: data.defaults, sites: data.sites, presets: data.presets };
+    const payload = { format: 'audio-extender', version: 1, app: data.app, defaults: data.defaults, sites: data.sites, presets: data.presets, soundProfiles: data.soundProfiles };
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
@@ -1635,7 +1712,7 @@
       const obj = JSON.parse(await file.text());
       if (obj.format !== 'audio-extender') throw new Error('format');
       const d = AE.normalize(obj);
-      await API.save({ app: d.app, defaults: d.defaults, sites: d.sites, presets: d.presets });
+      await API.save({ app: d.app, defaults: d.defaults, sites: d.sites, presets: d.presets, soundProfiles: d.soundProfiles });
       await reloadData(true);
       dataMsg(tr('set.imported'));
     } catch {

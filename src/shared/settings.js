@@ -121,6 +121,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
       defaults: merge(DEFAULT_AUDIO, data.defaults),
       sites: isObj(data.sites) ? data.sites : {},
       presets: Array.isArray(data.presets) ? data.presets : [],
+      soundProfiles: Array.isArray(data.soundProfiles) ? data.soundProfiles : [], // [{ id, name, audio }]
       outputs: isObj(data.outputs) ? data.outputs : {},
     };
   }
@@ -209,7 +210,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   }
 
   /** Storage keys that hold settings (the AutoEq index cache is stored separately). */
-  const KEYS = ['app', 'defaults', 'sites', 'presets', 'outputs'];
+  const KEYS = ['app', 'defaults', 'sites', 'presets', 'outputs', 'soundProfiles'];
 
   /* ---------------------------------------------------------
      Versioning
