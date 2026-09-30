@@ -557,6 +557,7 @@ option { background: var(--bg-2); color: var(--text); }
 .link-btn { font: inherit; color: var(--a1); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .row-select { flex: none; min-width: 96px; }
 #allow-add { margin-top: 8px; }
+.shift-right { display: flex; align-items: center; gap: 10px; }
 /* normalization is set for all tabs in the Mixer: the per-site card only shows it */
 #norm-card.locked .switch, #norm-card.locked input[type=range] { opacity: .45; pointer-events: none; }
 .norm-note { margin-top: 4px; color: var(--a1); }
