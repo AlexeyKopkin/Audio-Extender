@@ -124,7 +124,7 @@
         </div>
 
         <input type="range" id="boost" min="0" max="600" step="5" value="100" data-bind="gain" aria-label="Gain">
-        <div class="range-scale"><span>0%</span><span>150%</span><span>300%</span><span>450%</span><span>600%</span></div>
+        <div class="range-scale" id="boost-scale"><span>0%</span><span>150%</span><span>300%</span><span>450%</span><span>600%</span></div>
 
         <div class="chips" id="boost-presets">
           <button class="chip" data-v="100">100%</button>
@@ -376,6 +376,7 @@
         <div class="section-title"><svg class="ic xs"><use href="#i-sliders"/></svg><span data-i18n="set.behavior">Behavior</span></div>
         <div class="toggle-row"><span data-i18n="set.perSite">Remember settings for each site</span><label class="switch"><input type="checkbox" data-app="perSite"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.autoEnable">Enable automatically on new sites</span><label class="switch"><input type="checkbox" data-app="autoEnable"><span></span></label></div>
+        <div class="toggle-row"><span data-i18n="set.maxGain">Maximum volume</span><select id="max-gain" class="row-select"></select></div>
         <div class="toggle-row"><span data-i18n="set.badge">Show gain on the toolbar icon</span><label class="switch"><input type="checkbox" data-app="badge"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.animations">Spectrum and meter animations</span><label class="switch"><input type="checkbox" data-app="animations"><span></span></label></div>
         <div class="toggle-row" id="row-sidebar"><span data-i18n="set.sidebar">Open in sidebar</span><label class="switch"><input type="checkbox" data-app="sidebar"><span></span></label></div>
