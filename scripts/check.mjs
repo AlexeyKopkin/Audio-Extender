@@ -43,8 +43,11 @@ export function check(dir, platform) {
   for (const p of pages) need(p, 'page');
   for (const cs of m.content_scripts || []) for (const f of [...(cs.js || []), ...(cs.css || [])]) need(f, 'content_scripts');
 
-  // files referenced from the HTML pages
-  for (const page of new Set(pages.map(clean))) {
+  // files referenced from every HTML page in the package (also pages the manifest doesn't name, e.g. offscreen.html)
+  const htmlFiles = (function walk(d, base = '') {
+    return fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name), base + e.name + '/') : e.name.endsWith('.html') ? [base + e.name] : []);
+  })(dir);
+  for (const page of new Set([...pages.map(clean), ...htmlFiles])) {
     if (!exists(page)) continue;
     const html = fs.readFileSync(path.join(dir, page), 'utf8');
     for (const [, ref] of html.matchAll(/(?:src|href)="([^"#:]+)"/g)) need(path.posix.join(path.posix.dirname(page), ref), page);

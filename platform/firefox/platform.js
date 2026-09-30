@@ -4,6 +4,7 @@
    Everything that differs between browsers lives here, behind the
    same PLATFORM interface in every build (see platform/chrome/platform.js):
      id, name, storeUrl, restrictedHosts, sidebar, strings
+   and optionally capture (deep mode; Firefox has no tab-capture API).
    Loaded right after shared/settings.js in the background and the popup.
    ========================================================= */
 (function (global) {
