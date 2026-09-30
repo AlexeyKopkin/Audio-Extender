@@ -102,6 +102,10 @@
     hasAccess(url) { return browser.permissions.contains({ origins: [originPattern(url)] }); },
     requestAccess(url) { return browser.permissions.request({ origins: [originPattern(url)] }); },
     inject(tabId) { return browser.runtime.sendMessage({ type: 'inject', tabId }); },
+    get canSync() { return !!(browser.storage && browser.storage.sync); },
+    syncState() { return browser.runtime.sendMessage({ type: 'sync-state' }); },
+    /** mode: 'this' (this device's settings go to the account) or 'synced' (the account's come here) */
+    setSync(on, mode) { return browser.runtime.sendMessage({ type: 'sync-set', on, mode }); },
 
     connect(tabId) {
       let port;

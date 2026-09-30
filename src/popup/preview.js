@@ -85,6 +85,7 @@
       demoListeners.forEach((f) => f(changes));
     },
     persist(patch) { return this.save(patch); },
+    canSync: false,
     async getRaw(key) { return demoRead()[key]; },
     async clearAll() { try { localStorage.removeItem(demoKey); } catch { /* ignore */ } demoListeners.forEach((f) => f({ app: {} })); },
     onChanged(cb) { demoListeners.push(cb); },

@@ -85,6 +85,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     allow: {},              // { host: true } for siteMode 'allow'
     matchLoudness: false,   // Mixer: every tab normalized to matchTarget (per-site gain still on top)
     matchTarget: -16,       // LUFS-like target, -24 … -8
+    sync: false,            // copy settings through the browser account (storage.sync); per device
     speedWheel: false,      // Shift + mouse wheel over a video changes the speed
     speedKeyMap: { ...SPEED_KEYS }, // action → key code ('' = off)
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
