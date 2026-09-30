@@ -57,8 +57,11 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   /** Extension-wide preferences. */
   // Speed keys on pages (content/speed.js): KeyboardEvent.code per action ('' = off), so any layout works
-  // hold: 2× while the key is held (no key by default: users pick one, so no site loses a key)
-  const SPEED_KEYS = { slower: 'KeyS', faster: 'KeyD', reset: 'KeyR', toggle: 'KeyG', back: 'KeyZ', forward: 'KeyX', hold: '' };
+  // hold, loop, frameBack / frameForward: no key by default (users pick one, so no site loses a key)
+  const SPEED_KEYS = {
+    slower: 'KeyS', faster: 'KeyD', reset: 'KeyR', toggle: 'KeyG', back: 'KeyZ', forward: 'KeyX',
+    hold: '', loop: '', frameBack: '', frameForward: '',
+  };
   // keys that can be assigned: letters, digits, punctuation, F1–F12 — never Tab / Enter / Esc / Space / arrows
   const KEY_CODE_OK = /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|F([1-9]|1[0-2])|Comma|Period|Slash|Semicolon|Quote|Backquote|BracketLeft|BracketRight|Backslash|Minus|Equal)$/;
 
@@ -77,6 +80,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedBadge: true,       // show "1.5×" briefly when the speed changes
     speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
     seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
+    seekScaled: false,      // the jump grows with the speed (2× → twice as far)
     speedWheel: false,      // Shift + mouse wheel over a video changes the speed
     speedKeyMap: { ...SPEED_KEYS }, // action → key code ('' = off)
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
