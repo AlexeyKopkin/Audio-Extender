@@ -306,7 +306,7 @@
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
      Phones have no keyboard: only the badge switch stays. */
-  const KEY_HINT = [['slower', 'faster', 'fx.keySlowerFaster'], ['reset', null, 'fx.keyReset'], ['toggle', null, 'fx.keyToggle'], ['back', 'forward', 'fx.keySeek'], ['hold', null, 'fx.keyHold']];
+  const KEY_HINT = [['slower', 'faster', 'fx.keySlowerFaster'], ['reset', null, 'fx.keyReset'], ['toggle', null, 'fx.keyToggle'], ['back', 'forward', 'fx.keySeek'], ['hold', null, 'fx.keyHold'], ['loop', null, 'fx.keyLoop'], ['frameBack', 'frameForward', 'fx.keyFrame']];
   const KEY_NAMES = { Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=' };
   const keyLabel = (code) => (code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? code.slice(5)
     : code.startsWith('Numpad') ? 'Num ' + code.slice(6) : KEY_NAMES[code] || code);
@@ -325,6 +325,7 @@
     $('#speed-site-label').textContent = tr('fx.speedKeysSite', { site: host || '' });
     $('#speed-site').checked = !(data.app.speedKeysOff || {})[host];
     $('#speed-opts').classList.toggle('hidden', !data.app.speedKeys);
+    $('#row-seek-scaled').classList.toggle('hidden', !data.app.speedKeys);
     setHTML($('#speed-step'), AE.SPEED_STEPS.map((v) => `<option value="${v}">±${v}×</option>`).join(''));
     setHTML($('#seek-step'), AE.SEEK_STEPS.map((v) => `<option value="${v}">${esc(tr('fx.seconds', { s: v }))}</option>`).join(''));
     $('#speed-step').value = keyStep();
@@ -337,7 +338,7 @@
       const kbd = on.map((x) => `<kbd>${esc(keyLabel(keys[x]))}</kbd>`).join(' ');
       // one key of a pair left: name that action alone
       const label = b && on.length === 1
-        ? `${tr('fx.act.' + on[0])} ${k === 'fx.keySlowerFaster' ? '±' + keyStep() : tr('fx.seconds', { s: keySeek() })}`
+        ? tr('fx.act.' + on[0]) + (k === 'fx.keySlowerFaster' ? ' ±' + keyStep() : k === 'fx.keySeek' ? ' ' + tr('fx.seconds', { s: keySeek() }) : '')
         : text(k);
       return `<span>${kbd} ${esc(label)}</span>`;
     }).filter(Boolean).join(' · '));

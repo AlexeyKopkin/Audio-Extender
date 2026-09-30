@@ -10,6 +10,8 @@
      G      1× ↔ the last other speed  Z / X  back / forward (app.seekSeconds, 10 s)
    Hold (a key the user assigns): 2× while held (double the speed from 2× up),
    back to the site's speed on release; never stored.
+   Loop (assigned by the user): 1st press sets A, 2nd sets B and loops A–B, 3rd clears.
+   Frame back / forward (assigned by the user): pause and step 1/30 s.
    Range 0.1–16×.
    Shift + mouse wheel over a video: faster / slower by the same step
    (app.speedWheel, off by default; the listener exists only while it is on,
@@ -62,10 +64,14 @@
       const cur = s.fx.speed.value;
       if (action === 'hold') {
         if (!held && !e.repeat) holdStart(e.code, cur);
+      } else if (action === 'loop') {
+        if (!e.repeat) loopKey();
+      } else if (action === 'frameBack' || action === 'frameForward') {
+        frameStep(action === 'frameBack' ? -1 : 1);
       } else if (action === 'back' || action === 'forward') {
         const el = target();
         if (!el || !isFinite(el.currentTime)) return;
-        const seek = pick(app.seekSeconds, AE.SEEK_STEPS, 10);
+        const seek = round(pick(app.seekSeconds, AE.SEEK_STEPS, 10) * (app.seekScaled ? cur : 1));
         const d = action === 'back' ? -seek : seek;
         const end = isFinite(el.duration) ? el.duration : Infinity;
         el.currentTime = Math.max(0, Math.min(end, el.currentTime + d));
@@ -118,6 +124,53 @@
     addEventListener('blur', holdEnd);
     document.addEventListener('visibilitychange', holdEnd);
 
+    /* ---------- A–B loop and frame steps ---------- */
+    let loop = null, loopRaf = 0; // { el, a, b }: b is null while only A is set
+
+    function loopCheck() {
+      if (loop && loop.b != null && loop.el.currentTime >= loop.b) loop.el.currentTime = loop.a;
+    }
+    // timeupdate alone comes ~4× a second: check every frame while the page is visible
+    function loopTick() { loopCheck(); loopRaf = loop && loop.b != null ? requestAnimationFrame(loopTick) : 0; }
+
+    function loopClear() {
+      if (!loop) return;
+      loop.el.removeEventListener('timeupdate', loopCheck);
+      loop.el.removeEventListener('loadstart', loopClear); // another video in the same player
+      cancelAnimationFrame(loopRaf);
+      loop = null;
+    }
+
+    function loopKey() {
+      const el = target();
+      if (!el || !isFinite(el.currentTime)) return;
+      if (!loop || loop.el !== el) {
+        loopClear();
+        loop = { el, a: el.currentTime, b: null };
+        el.addEventListener('timeupdate', loopCheck);
+        el.addEventListener('loadstart', loopClear);
+        show('A ' + clock(loop.a), true);
+      } else if (loop.b == null && el.currentTime > loop.a + 0.2) {
+        loop.b = el.currentTime;
+        el.currentTime = loop.a;
+        loopTick();
+        show(`A ${clock(loop.a)} → B ${clock(loop.b)} ⟲`, true);
+      } else {
+        loopClear();
+        show('A–B ✕', true);
+      }
+    }
+
+    function frameStep(dir) {
+      const el = target();
+      if (!el || !isFinite(el.currentTime)) return;
+      if (!el.paused) el.pause();
+      // browsers don't tell the frame rate: 1/30 s steps reach every frame of 24–30 fps video
+      const end = isFinite(el.duration) ? el.duration : Infinity;
+      el.currentTime = Math.max(0, Math.min(end, el.currentTime + dir / 30));
+      show((dir < 0 ? '◀ ' : '▶ ') + clock(el.currentTime, true), true);
+    }
+
     /* ---------- Shift + wheel over a video ---------- */
     let wheelOn = false, lastWheel = 0;
 
@@ -169,18 +222,27 @@
       return { x: Math.max(8, r.left + 12), y: Math.max(8, r.top + 12) };
     }
 
+    /** 754 s → "12:34", 3725 s → "1:02:05"; `frac`: hundredths too ("12:34.56"). */
+    function clock(sec, frac) {
+      const t = frac ? sec : Math.round(sec);
+      const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+      const ss = frac ? s.toFixed(2).padStart(5, '0') : String(Math.floor(s)).padStart(2, '0');
+      return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + ss;
+    }
+
     /** " · −12:30": how long the media still plays at speed `v` ('' when it doesn't help). */
     function timeLeft(v) {
       const el = target();
       if (!el || v === 1 || !isFinite(el.duration) || el.duration < 60) return '';
-      const t = Math.round(Math.max(0, el.duration - el.currentTime) / v);
-      const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = String(t % 60).padStart(2, '0');
-      return ' · −' + (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + sec;
+      return ' · −' + clock(Math.max(0, el.duration - el.currentTime) / v);
     }
 
-    function badge(v) {
+    function badge(v) { show(String(+(+v).toFixed(2)) + '×' + timeLeft(v)); }
+
+    /** `always`: answers to a key press (loop, frame) show even with the speed badge turned off. */
+    function show(text, always) {
       const app = env.app();
-      if (!app || !app.speedBadge || document.hidden || !mediaHere()) return;
+      if (!app || (!app.speedBadge && !always) || document.hidden || !mediaHere()) return;
       const fs = document.fullscreenElement;
       if (fs && fs instanceof HTMLMediaElement) return; // a fullscreen <video> can't hold an overlay
       if (!box) {
@@ -201,7 +263,7 @@
       const p = anchor();
       box.host.style.left = p.x + 'px';
       box.host.style.top = p.y + 'px';
-      box.d.textContent = String(+(+v).toFixed(2)) + '×' + timeLeft(v);
+      box.d.textContent = text;
       box.d.classList.remove('out');
       clearTimeout(timer);
       timer = setTimeout(() => {
