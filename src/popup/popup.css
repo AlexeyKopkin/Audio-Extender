@@ -565,6 +565,19 @@ option { background: var(--bg-2); color: var(--text); }
   font-variant-numeric: tabular-nums;
 }
 .g-value small { font-size: 22px; font-weight: 700; margin-left: 2px; }
+
+/* values you can click to type an exact number (gain, speed) */
+.typeable { cursor: text; border-radius: 8px; }
+.typeable:hover { outline: 1px dashed var(--border-strong); outline-offset: 2px; }
+.typeable:focus-visible { outline: 2px solid var(--a1); outline-offset: 2px; }
+#gauge-value { pointer-events: auto; } /* the gauge centre lets clicks through, except on the number */
+.inline-num {
+  font: inherit; letter-spacing: inherit; text-align: center;
+  color: var(--text); -webkit-text-fill-color: var(--text);
+  background: var(--surface-2); border: 1px solid var(--a1); border-radius: 8px; outline: none;
+}
+.g-value .inline-num { pointer-events: auto; width: 3.4ch; padding: 0; font-size: 44px; }
+.fx-head .inline-num { width: 7ch; padding: 3px 6px; font-size: 12px; font-weight: 700; border-radius: 99px; }
 .g-db { font-size: 12px; font-weight: 650; color: var(--a1); padding: 2px 9px; border-radius: 99px; background: color-mix(in srgb, var(--a1) 13%, transparent); }
 
 .round-btn {
