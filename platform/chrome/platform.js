@@ -26,6 +26,7 @@
       'app.unavailableDesc': '{b} doesn’t let extensions work on internal pages ({scheme}, settings, {store}, PDF viewer).',
       'app.restrictedSite': '{b} blocks extensions here',
       'app.restrictedSiteDesc': 'This page is protected by {b} (for example {store} or a site blocked by a policy). Its audio plays without processing.',
+      'dev.grantDesc': 'To show device names to an extension, {b} needs microphone access once. Audio Extender never records or uses the microphone — it only lists the devices.',
     },
     ru: {
       'set.sidebar': 'Открывать в боковой панели',
@@ -34,6 +35,7 @@
       'app.unavailableDesc': '{b} не разрешает расширениям работать на служебных страницах ({scheme}, настройки, {store}, просмотр PDF).',
       'app.restrictedSite': '{b} запрещает здесь расширения',
       'app.restrictedSiteDesc': 'Эта страница защищена {b} (например, {store} или сайт, закрытый политикой). Звук здесь играет без обработки.',
+      'dev.grantDesc': 'Чтобы показать расширению названия устройств, {b} один раз просит доступ к микрофону. Audio Extender никогда не записывает и не использует микрофон — он только получает список устройств.',
     },
     uk: {
       'set.sidebar': 'Відкривати в бічній панелі',
@@ -42,6 +44,7 @@
       'app.unavailableDesc': '{b} не дозволяє розширенням працювати на службових сторінках ({scheme}, налаштування, {store}, перегляд PDF).',
       'app.restrictedSite': '{b} забороняє тут розширення',
       'app.restrictedSiteDesc': 'Ця сторінка захищена {b} (наприклад, {store} або сайт, закритий політикою). Звук тут грає без обробки.',
+      'dev.grantDesc': 'Щоб показати розширенню назви пристроїв, {b} один раз просить доступ до мікрофона. Audio Extender ніколи не записує й не використовує мікрофон — він лише отримує список пристроїв.',
     },
     de: {
       'set.sidebar': 'Im Seitenbereich öffnen',
@@ -50,6 +53,7 @@
       'app.unavailableDesc': '{b} erlaubt Erweiterungen nicht auf internen Seiten ({scheme}, Einstellungen, {store}, PDF-Betrachter).',
       'app.restrictedSite': '{b} sperrt hier Erweiterungen',
       'app.restrictedSiteDesc': 'Diese Seite ist von {b} geschützt (z. B. der {store} oder eine per Richtlinie gesperrte Website). Der Ton wird unverarbeitet abgespielt.',
+      'dev.grantDesc': 'Damit eine Erweiterung Gerätenamen sieht, braucht {b} einmalig Mikrofonzugriff. Audio Extender nimmt nie etwas auf und nutzt das Mikrofon nicht — es listet nur die Geräte auf.',
     },
     it: {
       'set.sidebar': 'Apri nel pannello laterale',
@@ -58,6 +62,7 @@
       'app.unavailableDesc': '{b} non consente alle estensioni di funzionare nelle pagine interne ({scheme}, impostazioni, {store}, visualizzatore PDF).',
       'app.restrictedSite': '{b} blocca le estensioni qui',
       'app.restrictedSiteDesc': 'Questa pagina è protetta da {b} (ad esempio {store} o un sito bloccato da un criterio). L’audio viene riprodotto senza elaborazione.',
+      'dev.grantDesc': 'Per mostrare i nomi dei dispositivi a un’estensione, {b} richiede una volta l’accesso al microfono. Audio Extender non registra né usa mai il microfono: elenca solo i dispositivi.',
     },
     fr: {
       'set.sidebar': 'Ouvrir dans le panneau latéral',
@@ -66,6 +71,7 @@
       'app.unavailableDesc': '{b} n’autorise pas les extensions sur les pages internes ({scheme}, paramètres, {store}, visionneuse PDF).',
       'app.restrictedSite': '{b} bloque les extensions ici',
       'app.restrictedSiteDesc': 'Cette page est protégée par {b} (par exemple {store} ou un site bloqué par une stratégie). Le son est lu sans traitement.',
+      'dev.grantDesc': 'Pour montrer les noms des appareils à une extension, {b} demande une fois l’accès au micro. Audio Extender n’enregistre ni n’utilise jamais le micro : il liste seulement les appareils.',
     },
   };
   const strings = {};

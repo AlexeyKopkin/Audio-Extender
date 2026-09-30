@@ -523,6 +523,11 @@ option { background: var(--bg-2); color: var(--text); }
 
 /* ================= BOOSTER ================= */
 .gauge-card { padding-top: 10px; }
+.dev-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--text-mute); }
+.dev-row .ic { flex: none; }
+.dev-row label { flex: none; }
+.dev-row select { flex: 1; min-width: 0; text-overflow: ellipsis; }
+.dev-hint { margin-top: 6px; }
 .gauge-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .gauge { position: relative; width: 214px; height: 214px; }
 .gauge svg { width: 100%; height: 100%; overflow: visible; }
@@ -769,6 +774,7 @@ option { background: var(--bg-2); color: var(--text); }
 .mix-meta { font-size: 11px; color: var(--text-mute); margin-top: 1px; }
 .mix-controls { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 .mix-controls output { font-size: 11.5px; font-weight: 650; width: 38px; text-align: right; }
+.mix-dev { display: block; width: calc(100% - 46px); height: 28px; margin-top: 6px; font-size: 11.5px; border-radius: 8px; text-overflow: ellipsis; }
 .mini-meter { height: 3px; border-radius: 99px; background: var(--surface-3); overflow: hidden; margin-right: 46px; }
 .mini-meter i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--ok), var(--a3)); }
 .mix-btns { display: flex; flex-direction: column; gap: 6px; }

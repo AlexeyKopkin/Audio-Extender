@@ -38,6 +38,18 @@
     hasShortcuts: !mobilePreview,
     canMute: !mobilePreview,
     canCapture: false,
+    // output devices: demo list (a phone has no device choice, like Firefox for Android)
+    outputMode: mobilePreview ? null : 'deep',
+    async listOutputs() {
+      return { granted: true, devices: [
+        { id: 'demo-speakers', label: 'Speakers (Realtek High Definition Audio)' },
+        { id: 'demo-headphones', label: 'WH-1000XM5 (Bluetooth)' },
+        { id: 'demo-hdmi', label: 'LG TV (NVIDIA High Definition Audio)' },
+      ] };
+    },
+    async grantOutputs() {},
+    async askOutput() {},
+    async captureIsOn() { return false; },
 
     async load() {
       const d = demoRead();
@@ -136,6 +148,7 @@
       demoTabListeners.forEach((f) => f());
     },
     async reloadTab() {},
+    async activateTab() {},
     async commands() {
       return [
         { name: '_execute_action', shortcut: 'Alt+Shift+A' },

@@ -10,6 +10,10 @@ Chrome and Edge.
 - Chrome / Edge: option to open in the browser's side panel
 - Chrome / Edge: deep mode — for audio the page can't hand over (another domain without permission), the popup offers to process the whole tab; the browser shows a sharing indicator on the tab while it's on
 - The site line shows "audio playing" also when the audio plays but can't be processed
+- Output device per tab: "Play on" in the Booster and in every Mixer row sends a tab to other speakers or headphones; remembered per site, back to the default device if the chosen one is missing
+  - Firefox: the first choice opens Firefox's device picker from a button on the page; on later visits the device switches over with the first click on the page
+  - Chrome / Edge: the tab plays through deep mode; device names need a one-time microphone permission (nothing is recorded)
+  - Not available on Firefox for Android
 
 ## [0.2.1] — 2026-09-29
 

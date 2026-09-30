@@ -15,12 +15,12 @@
   const createChainKit = window.__audioExtenderChain;
   delete window.__audioExtenderChain;
 
-  const captures = new Map(); // tabId -> { ctx, stream, src, chain, env }
+  const captures = new Map(); // tabId -> { ctx, stream, src, chain, env, out, outState }
 
   const isActive = (settings, duck) => !!settings && (AE.needsProcessing(settings) || duck < 1);
 
-  async function start({ tabId, streamId, settings, duck }) {
-    if (captures.has(tabId)) { update({ tabId, settings, duck }); return { ok: true }; }
+  async function start({ tabId, streamId, settings, duck, output }) {
+    if (captures.has(tabId)) { update({ tabId, settings, duck, output }); return { ok: true }; }
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -46,7 +46,9 @@
       src.connect(chain.input);
       const track = stream.getAudioTracks()[0];
       if (track) track.addEventListener('ended', () => { stop(tabId); chrome.runtime.sendMessage({ type: 'capture-ended', tabId }).catch(() => {}); });
-      captures.set(tabId, { ctx, stream, src, chain, env });
+      const c = { ctx, stream, src, chain, env, out: '', outState: '' };
+      captures.set(tabId, c);
+      setOutput(c, output);
       return { ok: true };
     } catch (e) {
       stream.getTracks().forEach((t) => t.stop());
@@ -55,14 +57,41 @@
     }
   }
 
-  function update({ tabId, settings, duck }) {
+  function update({ tabId, settings, duck, output }) {
     const c = captures.get(tabId);
     if (!c) return;
     if (settings) c.env.S = settings;
     if (typeof duck === 'number') c.env.duck = duck;
     c.env.active = isActive(c.env.S, c.env.duck);
     c.chain.apply();
+    if (typeof output === 'string') setOutput(c, output);
   }
+
+  /** Output device of a captured tab ('' = default). Ids come from this (extension) origin;
+   *  if the device can't be used the chain stays on the default device. */
+  async function setOutput(c, id) {
+    id = id || '';
+    if (id === c.out && c.outState !== 'lost') return;
+    c.out = id;
+    try {
+      await c.chain.setSink(id);
+      if (c.out === id) c.outState = id ? 'on' : '';
+    } catch {
+      if (c.out === id) c.outState = 'failed';
+    }
+  }
+
+  // headphones unplugged / plugged back while chosen
+  navigator.mediaDevices.addEventListener('devicechange', async () => {
+    let ids = null;
+    try { ids = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audiooutput').map((d) => d.deviceId); } catch { return; }
+    for (const c of captures.values()) {
+      if (!c.out) continue;
+      const present = ids.includes(c.out);
+      if (!present && c.outState === 'on') { c.chain.setSink('').catch(() => {}); c.outState = 'lost'; }
+      else if (present && c.outState === 'lost') setOutput(c, c.out);
+    }
+  });
 
   function stop(tabId) {
     const c = captures.get(tabId);
@@ -78,7 +107,7 @@
   function poll(tabId, want) {
     const c = captures.get(tabId);
     if (!c) return null;
-    const out = { type: 'reply', frame: 'deep', top: false, deep: true, v: AE.PROTOCOL, sources: 1, blocked: 0, playing: 0, active: c.env.active };
+    const out = { type: 'reply', frame: 'deep', top: false, deep: true, v: AE.PROTOCOL, sources: 1, blocked: 0, playing: 0, active: c.env.active, out: c.outState };
     if (want.includes('levels')) out.levels = c.chain.levels();
     if (want.includes('spectrum')) out.spectrum = c.chain.spectrum();
     return out;

@@ -15,9 +15,10 @@
 
   if (window.__audioExtenderEngine || window.__audioExtenderChain) return; // already running (re-injection)
 
-  // captured before page.js patches AudioNode.prototype
+  // captured before page.js patches AudioNode.prototype / HTMLMediaElement.prototype
   const origConnect = AudioNode.prototype.connect;
   const origDisconnect = AudioNode.prototype.disconnect;
+  const origPlay = HTMLMediaElement.prototype.play;
 
   const dbToLin = (db) => Math.pow(10, db / 20);
   const linToDb = (v) => (v > 0 ? 20 * Math.log10(v) : -Infinity);
@@ -92,7 +93,13 @@
         this.anL = ctx.createAnalyser(); this.anL.fftSize = 2048;
         this.anR = ctx.createAnalyser(); this.anR.fftSize = 2048;
         this.spec = ctx.createAnalyser(); this.spec.fftSize = 4096; this.spec.smoothingTimeConstant = 0.7;
-        origConnect.call(this.out, ctx.destination);
+        this.toDest = gain();   // the default device; muted while another device plays (see setSink)
+        origConnect.call(this.out, this.toDest);
+        origConnect.call(this.toDest, ctx.destination);
+        this.sinkId = '';
+        this.sinkEl = null;
+        this.msd = null;
+        this.onSinkLost = null;
         origConnect.call(this.out, this.meterIn);
         origConnect.call(this.meterIn, this.meterSplit);
         origConnect.call(this.meterSplit, this.anL, 0);
@@ -230,7 +237,55 @@
         return out;
       }
 
-      close() { clearInterval(this.agcTimer); }
+      /**
+       * Output device of this chain ('' = the default device). Rejects if the device can't be used;
+       * the chain then plays on the default device — never silent.
+       *   AudioContext.setSinkId (Chrome / Edge) — directly.
+       *   Otherwise (Firefox): out → MediaStreamDestination → hidden <audio> → setSinkId.
+       */
+      async setSink(id) {
+        id = id || '';
+        if (id === this.sinkId) return;
+        const ctx = this.ctx;
+        if (typeof ctx.setSinkId === 'function') {
+          try { await ctx.setSinkId(id); this.sinkId = id; }
+          catch (e) { await ctx.setSinkId('').catch(() => {}); this.sinkId = ''; throw e; }
+          return;
+        }
+        if (!id) { this.sinkToDestination(); return; }
+        if (!this.sinkEl) {
+          this.msd = ctx.createMediaStreamDestination();
+          origConnect.call(this.out, this.msd);
+          this.sinkEl = new Audio();
+          this.sinkEl.srcObject = this.msd.stream;
+          // the device went away / playback broke: back to the default device
+          this.sinkEl.addEventListener('error', () => { this.sinkToDestination(); if (this.onSinkLost) this.onSinkLost(); });
+        }
+        try {
+          await this.sinkEl.setSinkId(id);
+          await origPlay.call(this.sinkEl);
+        } catch (e) {
+          this.sinkToDestination();
+          throw e;
+        }
+        // only now silence the default output, so there is never a gap
+        this.toDest.gain.value = 0;
+        this.sinkId = id;
+      }
+
+      sinkToDestination() {
+        this.toDest.gain.value = 1;
+        if (this.sinkEl) {
+          this.sinkEl.pause();
+          this.sinkEl.srcObject = null;
+          this.sinkEl = null;
+          try { origDisconnect.call(this.out, this.msd); } catch { /* ignore */ }
+          this.msd = null;
+        }
+        this.sinkId = '';
+      }
+
+      close() { clearInterval(this.agcTimer); if (this.sinkEl) this.sinkToDestination(); }
     }
 
     function setFilter(node, spec, set) {

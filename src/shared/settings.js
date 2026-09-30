@@ -97,7 +97,16 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
       defaults: merge(DEFAULT_AUDIO, data.defaults),
       sites: isObj(data.sites) ? data.sites : {},
       presets: Array.isArray(data.presets) ? data.presets : [],
+      outputs: isObj(data.outputs) ? data.outputs : {},
     };
+  }
+
+  /** Output device chosen for `host`: { id, label } or null (the default device).
+   *  Kept apart from the audio settings: device ids belong to this browser profile
+   *  (per origin), so they are not part of presets, profiles or exported files. */
+  function outputFor(data, host) {
+    const o = host && data && isObj(data.outputs) ? data.outputs[host] : null;
+    return o && typeof o.id === 'string' && o.id ? { id: o.id, label: String(o.label || '') } : null;
   }
 
   /** Settings that apply to `host`, taking per-site and auto-enable prefs into account. */
@@ -150,7 +159,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   }
 
   /** Storage keys that hold settings (the AutoEq index cache is stored separately). */
-  const KEYS = ['app', 'defaults', 'sites', 'presets'];
+  const KEYS = ['app', 'defaults', 'sites', 'presets', 'outputs'];
 
   /* ---------------------------------------------------------
      Versioning
@@ -162,7 +171,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
      New fields with defaults need no migration: normalize()/merge() fill them in.
      --------------------------------------------------------- */
   const SCHEMA = 1;
-  const PROTOCOL = 1;
+  const PROTOCOL = 2; // 2: output device messages
   const MIGRATIONS = {
     // 2: (d) => { /* convert schema 1 → 2 */ return d; },
   };
@@ -178,7 +187,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
     G10, G31, MAX_GAIN, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
-    clone, merge, hostOf, normalize, effective, storeFor,
+    clone, merge, hostOf, normalize, effective, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
