@@ -143,6 +143,8 @@
       'mixer.unmute': 'Unmute',
       'mixer.solo': 'Solo',
       'mixer.duck': 'Lower other tabs while audio plays here',
+      'mixer.match': 'Same loudness in all tabs',
+      'mixer.matchNote': 'Set for all tabs in the Mixer',
       'mixer.showSilent': 'Also show tabs without audio',
 
       'set.theme': 'Theme',
@@ -369,6 +371,8 @@
       'mixer.unmute': 'Включить звук',
       'mixer.solo': 'Соло',
       'mixer.duck': 'Приглушать остальные вкладки, когда здесь играет звук',
+      'mixer.match': 'Одинаковая громкость во всех вкладках',
+      'mixer.matchNote': 'Задано для всех вкладок в Микшере',
       'mixer.showSilent': 'Показывать и вкладки без звука',
 
       'set.theme': 'Тема оформления',
@@ -595,6 +599,8 @@
       'mixer.unmute': 'Увімкнути звук',
       'mixer.solo': 'Соло',
       'mixer.duck': 'Приглушувати інші вкладки, коли тут грає звук',
+      'mixer.match': 'Однакова гучність у всіх вкладках',
+      'mixer.matchNote': 'Задано для всіх вкладок у Мікшері',
       'mixer.showSilent': 'Показувати й вкладки без звуку',
 
       'set.theme': 'Тема оформлення',
@@ -821,6 +827,8 @@
       'mixer.unmute': 'Ton an',
       'mixer.solo': 'Solo',
       'mixer.duck': 'Andere Tabs leiser, wenn hier Ton läuft',
+      'mixer.match': 'Gleiche Lautheit in allen Tabs',
+      'mixer.matchNote': 'Für alle Tabs im Mixer festgelegt',
       'mixer.showSilent': 'Auch Tabs ohne Ton anzeigen',
 
       'set.theme': 'Design',
@@ -1047,6 +1055,8 @@
       'mixer.unmute': 'Riattiva audio',
       'mixer.solo': 'Solo',
       'mixer.duck': 'Abbassa le altre schede quando qui c’è audio',
+      'mixer.match': 'Stesso volume in tutte le schede',
+      'mixer.matchNote': 'Impostato per tutte le schede nel Mixer',
       'mixer.showSilent': 'Mostra anche le schede senza audio',
 
       'set.theme': 'Tema',
@@ -1273,6 +1283,8 @@
       'mixer.unmute': 'Rétablir le son',
       'mixer.solo': 'Solo',
       'mixer.duck': 'Baisser les autres onglets quand du son joue ici',
+      'mixer.match': 'Même volume dans tous les onglets',
+      'mixer.matchNote': 'Réglé pour tous les onglets dans le Mixeur',
       'mixer.showSilent': 'Afficher aussi les onglets sans son',
 
       'set.theme': 'Thème',

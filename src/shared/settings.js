@@ -83,6 +83,8 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     seekScaled: false,      // the jump grows with the speed (2× → twice as far)
     siteMode: 'all',        // 'all' | 'allow': only on the sites in `allow`
     allow: {},              // { host: true } for siteMode 'allow'
+    matchLoudness: false,   // Mixer: every tab normalized to matchTarget (per-site gain still on top)
+    matchTarget: -16,       // LUFS-like target, -24 … -8
     speedWheel: false,      // Shift + mouse wheel over a video changes the speed
     speedKeyMap: { ...SPEED_KEYS }, // action → key code ('' = off)
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
@@ -165,6 +167,11 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     const s = merge(d.defaults, site);
     if (d.app.perSite && !site && !d.app.autoEnable) s.enabled = false;
     s.gain = Math.min(s.gain, gainCap(d.app));
+    // same loudness in all tabs: normalization with one target everywhere (stored site settings untouched)
+    if (d.app.matchLoudness && s.enabled) {
+      const t = Number(d.app.matchTarget);
+      s.fx.norm = { on: true, target: isFinite(t) ? Math.max(-24, Math.min(-8, t)) : -16 };
+    }
     return s;
   }
 

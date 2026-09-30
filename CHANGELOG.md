@@ -26,6 +26,7 @@ Chrome and Edge.
 - Optional hold key: 2× while the key is held, the site's speed again on release (assign it under Change keys)
 - Optional: Shift + mouse wheel over a video changes the speed (Effects → Playback speed, off by default)
 - Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
+- Mixer: "Same loudness in all tabs" — every tab is normalized to one target level, so switching between them doesn't jump in loudness; each site's gain still applies on top
 - Sound profiles (button in the header): save all settings of a site under a name and apply them to any site in one click; make the current settings the default for new sites. Included in export / import
 - "Only on sites I choose" (Settings): on every other site nothing is touched — no processing, no speed keys, no output device; the popup there offers "Turn on here"
 - Maximum volume (Settings): 150 / 200 / 300 / 400 / 600%. Nothing plays louder than that — not the slider, the Mixer, the shortcut, or a site saved or imported with a higher level
