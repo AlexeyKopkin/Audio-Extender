@@ -65,17 +65,25 @@
   });
 
   /* ---------------------------------------------------------
-     Output device of this tab — Firefox (selectAudioOutput), top frame only.
+     Output device of this tab — Firefox (selectAudioOutput): the top frame, and frames of the
+     same site (a player in a same-site iframe). Frames of other sites can't: Firefox's
+     permissions policy blocks selectAudioOutput / setSinkId there unless the page allows it.
      A device id only becomes usable in a document after selectAudioOutput() ran in it,
      and that needs a click in the page itself:
        first choice   → the popup asks for the in-page chip → click → Firefox's device picker
        later visits   → re-selected silently on the first click / key press on the page
                         (Firefox remembers the permission per site); default device until then.
+     A same-site frame needs its own selectAudioOutput too (ids are exposed per document), which
+     is silent because Firefox remembers the site's permission: it re-selects on the first click
+     inside the frame. Only the top frame shows the chip and reports the state to the popup.
      Chrome / Edge have no selectAudioOutput: there the tab plays through deep mode instead.
      --------------------------------------------------------- */
   const output = (() => {
     const md = navigator.mediaDevices;
-    const supported = window === window.top && !!md && typeof md.selectAudioOutput === 'function';
+    const isTop = window === window.top;
+    let sameSite = isTop;
+    try { sameSite = isTop || window.top.location.origin === location.origin; } catch { /* another site's frame */ }
+    const supported = sameSite && !!md && typeof md.selectAudioOutput === 'function';
     let want = null;      // { id, label } saved for this site
     let state = '';       // '' default | wait (needs a click) | on | lost (device gone) | failed
     let tried = null;     // id already tried silently in this document
@@ -181,14 +189,15 @@
 
     return {
       supported,
+      reports: supported && isTop, // one state per tab: the top frame's
       refresh,
-      ask(text) { if (supported) showChip(text); },
+      ask(text) { if (supported && isTop) showChip(text); },
       failed() { if (state === 'on') set('failed'); },
       get state() { return state; },
     };
   })();
 
-  const outStatus = () => (output.supported ? { out: output.state } : {});
+  const outStatus = () => (output.reports ? { out: output.state } : {});
 
   /* ---------------------------------------------------------
      Speed keys and badge (content/speed.js). A key press is stored as the

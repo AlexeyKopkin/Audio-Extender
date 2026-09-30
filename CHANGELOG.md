@@ -13,6 +13,7 @@ Chrome and Edge.
 - Clearer when a page's audio can't be processed: the notice names the reason (copy protection or audio from another site), and the Booster gauge fades with a short "Not applied" line instead of moving without effect (Chrome / Edge: with a Deep mode link)
 - Output device per tab: "Play on" in the Booster and in every Mixer row sends a tab to other speakers or headphones; remembered per site, back to the default device if the chosen one is missing
   - Firefox: the first choice opens Firefox's device picker from a button on the page; on later visits the device switches over with the first click on the page
+  - Firefox: players in a frame of the same site follow the tab's device after the first click in the player; players embedded from other sites stay on the default device (Firefox doesn't allow it there)
   - Chrome / Edge: the tab plays through deep mode; device names need a one-time microphone permission (nothing is recorded)
   - Not available on Firefox for Android
 - Playback speed from 0.1× to 16×; the slider has a log scale, so the usual speeds around 1× stay easy to set. Firefox plays sound only between 0.125× and 8×; outside that range the popup says so
