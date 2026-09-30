@@ -306,7 +306,16 @@
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
      Phones have no keyboard: only the badge switch stays. */
-  const KEY_HINT = [['S', 'D', 'fx.keySlowerFaster'], ['R', null, 'fx.keyReset'], ['G', null, 'fx.keyToggle'], ['Z', 'X', 'fx.keySeek']];
+  const KEY_HINT = [['slower', 'faster', 'fx.keySlowerFaster'], ['reset', null, 'fx.keyReset'], ['toggle', null, 'fx.keyToggle'], ['back', 'forward', 'fx.keySeek']];
+  const KEY_NAMES = { Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=' };
+  const keyLabel = (code) => (code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? code.slice(5)
+    : code.startsWith('Numpad') ? 'Num ' + code.slice(6) : KEY_NAMES[code] || code);
+  /** action → key code ('' when off) */
+  function actionKeys() {
+    const out = Object.fromEntries(Object.keys(AE.SPEED_KEYS).map((a) => [a, '']));
+    for (const [code, a] of Object.entries(AE.speedKeyMap(data.app))) out[a] = code;
+    return out;
+  }
   const keyStep = () => (AE.SPEED_STEPS.includes(data.app.speedStep) ? data.app.speedStep : 0.1);
   const keySeek = () => (AE.SEEK_STEPS.includes(data.app.seekSeconds) ? data.app.seekSeconds : 10);
   function renderSpeedKeys() {
@@ -321,8 +330,74 @@
     $('#speed-step').value = keyStep();
     $('#seek-step').value = keySeek();
     const text = (k) => (k === 'fx.keySlowerFaster' ? `${tr(k)} ±${keyStep()}` : tr(k, { s: keySeek() }));
-    setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => `<span><kbd>${a}</kbd>${b ? ` <kbd>${b}</kbd>` : ''} ${esc(text(k))}</span>`).join(' · '));
+    const keys = actionKeys();
+    setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => {
+      const on = [a, b].filter((x) => x && keys[x]);
+      if (!on.length) return '';
+      const kbd = on.map((x) => `<kbd>${esc(keyLabel(keys[x]))}</kbd>`).join(' ');
+      // one key of a pair left: name that action alone
+      const label = b && on.length === 1
+        ? `${tr('fx.act.' + on[0])} ${k === 'fx.keySlowerFaster' ? '±' + keyStep() : tr('fx.seconds', { s: keySeek() })}`
+        : text(k);
+      return `<span>${kbd} ${esc(label)}</span>`;
+    }).filter(Boolean).join(' · '));
+    $('#keymap-toggle').classList.toggle('hidden', !data.app.speedKeys);
+    if (!data.app.speedKeys) $('#keymap').classList.add('hidden');
+    renderKeymap();
   }
+
+  /* Key editor: click an action, press the new key (Backspace = off, Esc = cancel). */
+  let keyWait = null; // action waiting for a key
+  function renderKeymap(msg) {
+    const keys = actionKeys();
+    setHTML($('#keymap-rows'), Object.keys(AE.SPEED_KEYS).map((a) => {
+      const wait = keyWait === a, off = !keys[a];
+      const label = wait ? tr('fx.keysPress') : off ? tr('fx.keysOff') : keyLabel(keys[a]);
+      return `<div class="key-row"><span>${esc(tr('fx.act.' + a))}</span><button class="key-btn${wait ? ' wait' : ''}${off && !wait ? ' off' : ''}" data-act="${a}">${esc(label)}</button></div>`;
+    }).join(''));
+    $('#keymap-msg').textContent = msg || tr('fx.keysHelp');
+  }
+  $('#keymap-toggle').addEventListener('click', (e) => {
+    const box = $('#keymap');
+    box.classList.toggle('hidden');
+    e.currentTarget.setAttribute('aria-expanded', !box.classList.contains('hidden'));
+    keyWait = null;
+    renderKeymap();
+  });
+  $('#keymap-rows').addEventListener('click', (e) => {
+    const b = e.target.closest('.key-btn');
+    if (!b) return;
+    keyWait = keyWait === b.dataset.act ? null : b.dataset.act;
+    renderKeymap();
+    if (keyWait) $(`.key-btn[data-act="${keyWait}"]`).focus();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (!keyWait) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const act = keyWait;
+    if (e.key === 'Escape') { keyWait = null; renderKeymap(); return; }
+    const map = actionKeys();
+    let msg = '';
+    if (e.key === 'Backspace' || e.key === 'Delete') map[act] = '';
+    else if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !AE.speedKeyOk(e.code)) { renderKeymap(tr('fx.keysBad')); return; }
+    else {
+      const other = Object.keys(map).find((a) => a !== act && map[a] === e.code);
+      if (other) { map[other] = ''; msg = tr('fx.keysMoved', { key: keyLabel(e.code), action: tr('fx.act.' + other) }); }
+      map[act] = e.code;
+    }
+    keyWait = null;
+    data.app.speedKeyMap = map;
+    saveApp();
+    renderSpeedKeys();
+    if (msg) renderKeymap(msg);
+  }, true);
+  $('#keymap-reset').addEventListener('click', () => {
+    keyWait = null;
+    data.app.speedKeyMap = { ...AE.SPEED_KEYS };
+    saveApp();
+    renderSpeedKeys();
+  });
   function renderMaxGain() {
     setHTML($('#max-gain'), AE.GAIN_CAPS.map((v) => `<option value="${v}">${v}%</option>`).join(''));
     $('#max-gain').value = AE.gainCap(data.app);

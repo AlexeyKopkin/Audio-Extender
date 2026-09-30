@@ -756,6 +756,13 @@ option { background: var(--bg-2); color: var(--text); }
 .speed-keys .toggle-row { border-top: 1px solid var(--border); }
 .keys-hint { margin-top: 8px; line-height: 1.6; }
 .keys-hint > span { white-space: nowrap; } /* a key and what it does stay on one line */
+.keymap-toggle { margin-top: 6px; font-size: 12px; font-weight: 600; }
+.keymap { margin-top: 8px; padding: 8px 12px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.key-btn { min-width: 64px; height: 28px; padding: 0 10px; border-radius: 8px; font: 600 12px/1 inherit; color: var(--text); background: var(--surface-3); border: 1px solid var(--border); cursor: pointer; }
+.key-btn:hover, .key-btn:focus-visible { border-color: var(--a1); outline: none; }
+.key-btn.wait { border-color: var(--a1); color: var(--a1); }
+.key-btn.off { color: var(--text-mute); }
+.keymap-msg { margin: 6px 0 8px; }
 .keys-hint kbd { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 5px; text-align: center; font: 600 10.5px/17px inherit; color: var(--text); background: var(--surface-3); border: 1px solid var(--border); }
 .fx .toggle-row { padding-bottom: 0; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
 
