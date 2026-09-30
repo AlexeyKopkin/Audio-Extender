@@ -239,9 +239,10 @@
           return p;
         };
         const pin = peak(this.grIn), pout = peak(this.grOut);
-        if (pin < 1e-4) return 0;
+        // no input, or output still silent right after (re)wiring (look-ahead / oversampling delay)
+        if (pin < 1e-4 || pout < 1e-4) return 0;
         const db = linToDb(pout) - linToDb(pin);
-        return db < -0.2 ? db : 0; // window edges and the limiter's look-ahead: ignore tiny differences
+        return db < -0.2 ? Math.max(-40, db) : 0; // window edges and the look-ahead: ignore tiny differences
       }
 
       /** 72 log-spaced bars in 0…1, 20 Hz – 20 kHz. */
