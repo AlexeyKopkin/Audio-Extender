@@ -37,6 +37,7 @@
     hasSidebar: !mobilePreview,
     hasShortcuts: !mobilePreview,
     canMute: !mobilePreview,
+    canCapture: false,
 
     async load() {
       const d = demoRead();

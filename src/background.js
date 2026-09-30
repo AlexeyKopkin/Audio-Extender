@@ -47,7 +47,10 @@ function handleMessage(msg, sender) {
   if (!msg) return undefined;
   if (msg.type === 'hello') {
     const tabId = sender.tab && sender.tab.id;
-    return getDuck(tabId).then((duck) => ({ host: sender.tab ? AE.hostOf(sender.tab.url) : null, duck }));
+    // bypass: the platform processes this tab's whole output itself (Chrome deep mode)
+    const cap = PLATFORM.capture;
+    return Promise.all([getDuck(tabId), cap && tabId !== undefined ? cap.isOn(tabId) : false])
+      .then(([duck, bypass]) => ({ host: sender.tab ? AE.hostOf(sender.tab.url) : null, duck, bypass }));
   }
   // Popup edits are persisted here so they survive the popup closing mid-save.
   if (msg.type === 'persist' && msg.patch) {

@@ -40,6 +40,10 @@
     get hasShortcuts() { return !!(browser.commands && browser.commands.getAll); },
     // Firefox for Android can't mute tabs (no `muted` in tabs.update); it also has no windows API.
     get canMute() { return !!browser.windows; },
+    // deep mode: the platform can process the tab's whole output (Chrome / Edge tab capture)
+    get canCapture() { return !!(PLATFORM.capture && PLATFORM.capture.available); },
+    captureStart(tabId) { return PLATFORM.capture.start(tabId); },
+    captureStop(tabId) { return PLATFORM.capture.stop(tabId); },
 
     async load() { return AE.normalize(await browser.storage.local.get(AE.KEYS)); },
     persist(patch) { return browser.runtime.sendMessage({ type: 'persist', patch }).catch(() => browser.storage.local.set(patch)); },
@@ -83,11 +87,31 @@
       }
       port.onMessage.addListener((m) => handlers.forEach((f) => f(m)));
       port.onDisconnect.addListener(() => closers.forEach((f) => f()));
+
+      // A tab in deep mode is processed by the platform: its replies (marked `deep`) join the page's.
+      let deep = null, closed = false;
+      if (this.canCapture) {
+        PLATFORM.capture.isOn(tabId).then((on) => {
+          if (!on || closed) return;
+          try {
+            deep = PLATFORM.capture.connect(tabId);
+            deep.onMessage.addListener((m) => handlers.forEach((f) => f(m)));
+            deep.onDisconnect.addListener(() => { deep = null; });
+          } catch { deep = null; }
+        }, () => {});
+      }
       return {
-        post(msg) { try { port.postMessage(msg); } catch { /* closed */ } },
+        post(msg) {
+          try { port.postMessage(msg); } catch { /* closed */ }
+          if (deep) try { deep.postMessage(msg); } catch { /* closed */ }
+        },
         onMessage(f) { handlers.push(f); },
         onClose(f) { closers.push(f); },
-        close() { try { port.disconnect(); } catch { /* ignore */ } },
+        close() {
+          closed = true;
+          try { port.disconnect(); } catch { /* ignore */ }
+          if (deep) try { deep.disconnect(); } catch { /* ignore */ }
+        },
       };
     },
 

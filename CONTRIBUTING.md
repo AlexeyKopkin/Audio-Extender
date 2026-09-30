@@ -4,7 +4,7 @@ Thanks for helping! Bug reports, ideas and translations are welcome — open an 
 
 ## How it works
 
-Firefox has no `tabCapture` API, so the extension processes audio inside the page. It routes the page's `<audio>` / `<video>` elements and the page's own Web Audio graphs through its processing chain:
+The extension processes audio inside the page — no tab capture, so no recording indicator. It routes the page's `<audio>` / `<video>` elements and the page's own Web Audio graphs through its processing chain:
 
 ```
 AutoEq → EQ → bass → dialogue → night mode → stereo (width / mono / balance) → normalization → gain → limiter → soft clipper
@@ -13,6 +13,7 @@ AutoEq → EQ → bass → dialogue → night mode → stereo (width / mono / ba
 - Nothing is touched while all settings are neutral — media is only routed once processing is actually needed.
 - Audio that Web Audio would turn silent is never routed: DRM (EME) media and media from another domain without CORS keep playing untouched, and the popup says so.
 - A media element is only routed once its AudioContext is actually rendering, so autoplay rules or a slow audio device can't cause a gap.
+- **Deep mode (Chrome / Edge, on demand):** for sources the page can't hand over, the popup offers to capture the whole tab (`tabCapture`) and play it through the same chain in an offscreen document (`platform/chrome/capture.js`, `offscreen.js`). The page engine of that tab switches to bypass so nothing is processed twice; if the capture can't start, the tab keeps playing as before. Firefox has no tab-capture API, so it doesn't offer this mode.
 
 ## Project structure
 
@@ -29,7 +30,7 @@ src/                     shared by all browsers
   popup/preview.js       demo data for the design preview (not in the store packages)
   _locales/              extension name and description in six languages
 platform/firefox/        Firefox: manifest.json, platform.js, SVG icon
-platform/chrome/         Chrome and Edge: manifest.json, platform.js, service worker entry, PNG icons
+platform/chrome/         Chrome and Edge: manifest.json, platform.js, service worker entry (sw.js), deep mode (capture.js, offscreen.html/.js), PNG icons
 scripts/                 build and package check
 dist/                    build output (not in git)
 docs/screenshots/        images used in the README

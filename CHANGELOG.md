@@ -2,6 +2,15 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Chrome and Edge.
+
+- Chrome and Edge version from the same code (one package for both)
+- Chrome / Edge: option to open in the browser's side panel
+- Chrome / Edge: deep mode — for audio the page can't hand over (another domain without permission), the popup offers to process the whole tab; the browser shows a sharing indicator on the tab while it's on
+- The site line shows "audio playing" also when the audio plays but can't be processed
+
 ## [0.2.1] — 2026-09-29
 
 - Fixed: sites whose player first points the video at another domain and then switches it to a streamed source stayed "can't be processed" — the source is now checked again whenever it changes

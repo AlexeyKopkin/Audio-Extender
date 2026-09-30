@@ -16,6 +16,7 @@
   let host = null;
   let settings = null;
   let duck = 1;
+  let bypass = false;   // the whole tab is processed elsewhere (deep mode): the page engine must not touch the sound
   let lastReply = null;
   let lastStatus = { sources: 0, blocked: 0, playing: 0, active: false };
   const ports = new Set();
@@ -27,7 +28,8 @@
 
   function pushSettings() {
     if (!settings) return;
-    toPage({ type: 'settings', settings, duck, active: AE.needsProcessing(settings) || duck < 1 });
+    if (bypass) toPage({ type: 'settings', settings, duck: 1, active: false });
+    else toPage({ type: 'settings', settings, duck, active: AE.needsProcessing(settings) || duck < 1 });
   }
 
   document.addEventListener(TO_CONTENT, (e) => {
@@ -72,10 +74,13 @@
     });
   });
 
-  // "Lower other tabs" from the background script
+  // From the background script: "lower other tabs", and bypass while the tab is processed elsewhere
   browser.runtime.onMessage.addListener((msg) => {
     if (msg && msg.type === 'duck') {
       duck = msg.factor;
+      pushSettings();
+    } else if (msg && msg.type === 'bypass') {
+      bypass = !!msg.on;
       pushSettings();
     }
   });
@@ -83,6 +88,7 @@
   browser.runtime.sendMessage({ type: 'hello' }).then((info) => {
     host = info && info.host;
     if (info && typeof info.duck === 'number') duck = info.duck;
+    if (info && info.bypass) bypass = true;
     refresh();
   }).catch(() => { /* extension reloaded */ });
 })();

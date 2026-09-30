@@ -15,7 +15,7 @@
     "128": "icons/icon-128.png"
   },
 
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage", "scripting", "sidePanel", "tabCapture", "offscreen"],
   "host_permissions": ["<all_urls>"],
 
   "background": {
@@ -29,6 +29,10 @@
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"
     }
+  },
+
+  "side_panel": {
+    "default_path": "popup/popup.html?sidebar=1"
   },
 
   "content_scripts": [

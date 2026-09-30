@@ -3,12 +3,14 @@
 
    Same PLATFORM interface as platform/firefox/platform.js:
      id, name, storeUrl, restrictedHosts, sidebar, strings
+   and optionally capture (deep mode — here: tabCapture, see capture.js).
    One package serves Chrome and Edge; texts name the browser it runs in.
    Loaded right after shared/settings.js in the service worker and the popup.
    ========================================================= */
 (function (global) {
   'use strict';
 
+  const POPUP = 'popup/popup.html';
   const nav = global.navigator || {};
   const isEdge = !!((nav.userAgentData && nav.userAgentData.brands || []).some((b) => /Edge/.test(b.brand)) || /\bEdg\//.test(nav.userAgent || ''));
   const B = isEdge ? 'Edge' : 'Chrome';
@@ -18,6 +20,7 @@
 
   const TEXTS = {
     en: {
+      'set.sidebar': 'Open in side panel',
       'set.hk.note': 'Change: {scheme}extensions/shortcuts',
       'set.rate': 'Rate on {store}',
       'app.unavailableDesc': '{b} doesn’t let extensions work on internal pages ({scheme}, settings, {store}, PDF viewer).',
@@ -25,6 +28,7 @@
       'app.restrictedSiteDesc': 'This page is protected by {b} (for example {store} or a site blocked by a policy). Its audio plays without processing.',
     },
     ru: {
+      'set.sidebar': 'Открывать в боковой панели',
       'set.hk.note': 'Изменить: {scheme}extensions/shortcuts',
       'set.rate': 'Оценить в {store}',
       'app.unavailableDesc': '{b} не разрешает расширениям работать на служебных страницах ({scheme}, настройки, {store}, просмотр PDF).',
@@ -32,6 +36,7 @@
       'app.restrictedSiteDesc': 'Эта страница защищена {b} (например, {store} или сайт, закрытый политикой). Звук здесь играет без обработки.',
     },
     uk: {
+      'set.sidebar': 'Відкривати в бічній панелі',
       'set.hk.note': 'Змінити: {scheme}extensions/shortcuts',
       'set.rate': 'Оцінити в {store}',
       'app.unavailableDesc': '{b} не дозволяє розширенням працювати на службових сторінках ({scheme}, налаштування, {store}, перегляд PDF).',
@@ -39,6 +44,7 @@
       'app.restrictedSiteDesc': 'Ця сторінка захищена {b} (наприклад, {store} або сайт, закритий політикою). Звук тут грає без обробки.',
     },
     de: {
+      'set.sidebar': 'Im Seitenbereich öffnen',
       'set.hk.note': 'Ändern: {scheme}extensions/shortcuts',
       'set.rate': 'Im {store} bewerten',
       'app.unavailableDesc': '{b} erlaubt Erweiterungen nicht auf internen Seiten ({scheme}, Einstellungen, {store}, PDF-Betrachter).',
@@ -46,6 +52,7 @@
       'app.restrictedSiteDesc': 'Diese Seite ist von {b} geschützt (z. B. der {store} oder eine per Richtlinie gesperrte Website). Der Ton wird unverarbeitet abgespielt.',
     },
     it: {
+      'set.sidebar': 'Apri nel pannello laterale',
       'set.hk.note': 'Modifica: {scheme}extensions/shortcuts',
       'set.rate': 'Valuta su {store}',
       'app.unavailableDesc': '{b} non consente alle estensioni di funzionare nelle pagine interne ({scheme}, impostazioni, {store}, visualizzatore PDF).',
@@ -53,6 +60,7 @@
       'app.restrictedSiteDesc': 'Questa pagina è protetta da {b} (ad esempio {store} o un sito bloccato da un criterio). L’audio viene riprodotto senza elaborazione.',
     },
     fr: {
+      'set.sidebar': 'Ouvrir dans le panneau latéral',
       'set.hk.note': 'Modifier : {scheme}extensions/shortcuts',
       'set.rate': 'Noter sur {store}',
       'app.unavailableDesc': '{b} n’autorise pas les extensions sur les pages internes ({scheme}, paramètres, {store}, visionneuse PDF).',
@@ -74,11 +82,26 @@
     // extensions can't run on the browsers' own stores
     restrictedHosts: ['chromewebstore.google.com', 'chrome.google.com', 'microsoftedge.microsoft.com'],
 
-    // Side panel mode arrives with chrome.sidePanel; until then the option is hidden.
+    // Side panel mode: without a popup, the toolbar button (and Alt+Shift+A) opens the side panel.
     sidebar: {
-      available: false,
-      apply() { return Promise.resolve(); },
-      onActionClicked() {},
+      get available() { const c = global.chrome; return !!(c && c.sidePanel && c.sidePanel.setPanelBehavior); },
+      async apply(enabled) {
+        const on = !!enabled && this.available;
+        await global.chrome.action.setPopup({ popup: on ? '' : POPUP });
+        if (this.available) await global.chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: on });
+      },
+      onActionClicked() {}, // Chrome opens the panel itself (openPanelOnActionClick)
+    },
+
+    // Deep mode: capture the tab's whole audio output (tabCapture + offscreen document, see capture.js).
+    // Optional part of the interface — browsers without it simply don't offer deep mode.
+    capture: {
+      get available() { const c = global.chrome; return !!(c && c.tabCapture && c.offscreen); },
+      start(tabId) { return global.chrome.runtime.sendMessage({ type: 'capture-start', tabId }); },
+      stop(tabId) { return global.chrome.runtime.sendMessage({ type: 'capture-stop', tabId }); },
+      async isOn(tabId) { return ((await global.chrome.storage.session.get('deep')).deep || {})[tabId] !== undefined; },
+      /** Port to the offscreen document for one captured tab: metering polls and live settings. */
+      connect(tabId) { return global.chrome.runtime.connect({ name: 'ae-deep:' + tabId }); },
     },
 
     strings,

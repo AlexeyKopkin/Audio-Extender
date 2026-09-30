@@ -262,7 +262,7 @@
   /* ---------------------------------------------------------
      Header: site chip, power, reset
      --------------------------------------------------------- */
-  let status = { sources: 0, blocked: 0, playing: 0 };
+  let status = { sources: 0, blocked: 0, playing: 0, deep: false };
   function renderSiteChip() {
     let label = host || '';
     if (!host && tab) { try { label = new URL(tab.url).protocol.replace(':', ''); } catch { label = ''; } }
@@ -271,11 +271,12 @@
     let st = '';
     if (kind === 'web') {
       if (!audio.enabled) st = tr('app.processingOff');
+      else if (status.deep) st = tr('deep.chip');
       else if (status.sources) st = tr('app.sources', { n: status.sources });
-      else st = tr(status.playing ? 'app.playing' : 'app.noAudio'); // playing: heard, but nothing to change yet
+      else st = tr(status.playing || status.blocked ? 'app.playing' : 'app.noAudio'); // heard, but untouched (nothing to change yet, or can't be processed)
     }
     $('#site-status').textContent = st ? '· ' + st : '';
-    $('#site-chip .dot').classList.toggle('live', kind === 'web' && audio.enabled && status.sources + status.playing > 0);
+    $('#site-chip .dot').classList.toggle('live', kind === 'web' && audio.enabled && (status.deep || status.sources + status.playing > 0));
   }
 
   $('#btn-power').addEventListener('click', () => {
@@ -313,7 +314,12 @@
     else if (pageState === 'restricted') { n = { t: tr('app.restrictedSite'), d: tr('app.restrictedSiteDesc') }; na = true; }
     else if (pageState === 'reload') { n = { t: tr('app.reloadNeeded'), d: tr('app.reloadNeededDesc'), ...reload }; na = true; }
     else if (pageState === 'outdated') { n = { t: tr('app.reloadNeeded'), d: tr('app.updatedDesc'), ...reload }; na = true; }
-    else if (status.blocked > 0) n = { t: tr('app.blocked', { n: status.blocked }), d: tr('app.blockedDesc') };
+    else if (deepError) n = { t: tr('deep.failed'), d: tr('deep.failedDesc') };
+    else if (status.deep) n = { t: tr('deep.on'), d: tr('deep.onDesc'), b: tr('deep.stop'), act: stopDeep };
+    else if (status.blocked > 0) {
+      n = { t: tr('app.blocked', { n: status.blocked }), d: tr('app.blockedDesc') };
+      if (API.canCapture) Object.assign(n, { b: tr('deep.enable'), act: startDeep }); // the platform can process it anyway
+    }
 
     $('#app').classList.toggle('na', na);
     const key = n ? n.t + n.d + (n.b || '') : '';
@@ -328,6 +334,21 @@
     btn.classList.toggle('hidden', !n.b);
     btn.textContent = n.b || '';
     btn.onclick = n.act || null;
+  }
+  // Deep mode (where the platform supports it): process the tab's whole output instead of single sources
+  let deepError = false;
+  async function startDeep() {
+    if (!tab) return;
+    let res;
+    try { res = await API.captureStart(tab.id); } catch (e) { res = { ok: false, error: String(e) }; }
+    deepError = !(res && res.ok);
+    if (deepError) { renderNotice(); return; }
+    connect();
+  }
+  async function stopDeep() {
+    if (!tab) return;
+    try { await API.captureStop(tab.id); } catch { /* the tab is gone */ }
+    connect();
   }
   async function grantAccess() {
     let ok = false;
@@ -360,7 +381,8 @@
     link = null;
     frames.clear();
     gotReply = false;
-    status = { sources: 0, blocked: 0, playing: 0 };
+    deepError = false;
+    status = { sources: 0, blocked: 0, playing: 0, deep: false };
     if (kind !== 'web' || !tab || pageState === 'noAccess' || pageState === 'restricted') { renderNotice(); return; }
     const l = API.connect(tab.id);
     link = l;
@@ -403,13 +425,14 @@
 
   function aggregate() {
     const now = performance.now();
-    const out = { sources: 0, blocked: 0, playing: 0, l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
+    const out = { sources: 0, blocked: 0, playing: 0, deep: false, l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
     frames.forEach((f, k) => {
       const age = now - f.t;
       if (age > 2000) { frames.delete(k); return; }
       out.sources += f.r.sources || 0;
       out.blocked += f.r.blocked || 0;
       out.playing += f.r.playing || 0;
+      if (f.r.deep) out.deep = true;
       if (age > 400) return;
       const lv = f.r.levels;
       if (lv) {
@@ -420,6 +443,8 @@
       }
       if (f.r.spectrum) out.spectrum = out.spectrum ? out.spectrum.map((v, i) => Math.max(v, f.r.spectrum[i])) : f.r.spectrum;
     });
+    // the whole tab is processed (deep mode): nothing is left unprocessed or untouched
+    if (out.deep) { out.blocked = 0; out.playing = 0; }
     return out;
   }
 
@@ -1298,8 +1323,8 @@
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }
     const agg = aggregate();
-    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing) {
-      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing };
+    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing || agg.deep !== status.deep) {
+      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing, deep: agg.deep };
       renderSiteChip();
     }
     if (t - lastNotice > 500) { lastNotice = t; renderNotice(); }
