@@ -215,6 +215,7 @@
       if (sw) card.classList.toggle('on', sw.checked);
     });
     updateGauge();
+    renderUnheard();
     renderSpeed();
     const pw = $('#btn-power');
     pw.classList.toggle('on', audio.enabled);
@@ -345,7 +346,7 @@
   /* ---------------------------------------------------------
      Header: site chip, power, reset
      --------------------------------------------------------- */
-  let status = { sources: 0, blocked: 0, playing: 0, deep: false, out: '' };
+  let status = { sources: 0, blocked: 0, playing: 0, drm: 0, foreign: 0, deep: false, out: '' };
   function renderSiteChip() {
     let label = host || '';
     if (!host && tab) { try { label = new URL(tab.url).protocol.replace(':', ''); } catch { label = ''; } }
@@ -405,7 +406,7 @@
     else if (deepError) n = { t: tr('deep.failed'), d: tr('deep.failedDesc') };
     else if (status.deep) n = { t: tr('deep.on'), d: tr('deep.onDesc'), b: tr('deep.stop'), act: stopDeep };
     else if (status.blocked > 0) {
-      n = { t: tr('app.blocked', { n: status.blocked }), d: tr('app.blockedDesc') };
+      n = { t: tr('app.blocked', { n: status.blocked }), d: tr(blockedReason('app.blockedDesc')) };
       if (API.canCapture) Object.assign(n, { b: tr('deep.enable'), act: startDeep }); // the platform can process it anyway
     }
 
@@ -423,6 +424,25 @@
     btn.textContent = n.b || '';
     btn.onclick = n.act || null;
   }
+  /** Text key for why audio can't be processed: copy protection, another domain, or both / unknown. */
+  function blockedReason(base) {
+    if (status.drm && !status.foreign) return base + 'Drm';
+    if (status.foreign && !status.drm) return base + 'Foreign';
+    return base;
+  }
+
+  /** Booster: when none of the page's audio can be processed, the gauge says so instead of moving silently. */
+  function renderUnheard() {
+    const on = kind === 'web' && audio.enabled && !status.deep && status.blocked > 0 && status.sources === 0;
+    $('.gauge-card').classList.toggle('unheard', on);
+    const line = $('#boost-state');
+    line.classList.toggle('hidden', !on);
+    if (!on) return;
+    $('#boost-state-text').textContent = tr(blockedReason('why.short'));
+    $('#boost-state-btn').classList.toggle('hidden', !API.canCapture);
+  }
+  $('#boost-state-btn').addEventListener('click', () => startDeep());
+
   // Deep mode (where the platform supports it): process the tab's whole output instead of single sources
   let deepError = false;
   // quiet: started for a remembered output device — a failure only shows up as the device hint
@@ -479,7 +499,7 @@
     frames.clear();
     gotReply = false;
     deepError = false;
-    status = { sources: 0, blocked: 0, playing: 0, deep: false, out: '' };
+    status = { sources: 0, blocked: 0, playing: 0, drm: 0, foreign: 0, deep: false, out: '' };
     if (kind !== 'web' || !tab || pageState === 'noAccess' || pageState === 'restricted') { renderNotice(); return; }
     autoDeepStart();
     const l = API.connect(tab.id);
@@ -523,13 +543,15 @@
 
   function aggregate() {
     const now = performance.now();
-    const out = { sources: 0, blocked: 0, playing: 0, deep: false, out: '', l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
+    const out = { sources: 0, blocked: 0, playing: 0, drm: 0, foreign: 0, deep: false, out: '', l: 0, r: 0, gr: 0, spectrum: null, fresh: false };
     frames.forEach((f, k) => {
       const age = now - f.t;
       if (age > 2000) { frames.delete(k); return; }
       out.sources += f.r.sources || 0;
       out.blocked += f.r.blocked || 0;
       out.playing += f.r.playing || 0;
+      out.drm += f.r.drm || 0;
+      out.foreign += f.r.foreign || 0;
       if (f.r.deep) out.deep = true;
       if (typeof f.r.out === 'string' && (f.r.deep || !out.out)) out.out = f.r.out; // output device state (deep mode wins)
       if (age > 400) return;
@@ -543,7 +565,7 @@
       if (f.r.spectrum) out.spectrum = out.spectrum ? out.spectrum.map((v, i) => Math.max(v, f.r.spectrum[i])) : f.r.spectrum;
     });
     // the whole tab is processed (deep mode): nothing is left unprocessed or untouched
-    if (out.deep) { out.blocked = 0; out.playing = 0; }
+    if (out.deep) { out.blocked = 0; out.playing = 0; out.drm = 0; out.foreign = 0; }
     return out;
   }
 
@@ -1577,10 +1599,11 @@
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }
     const agg = aggregate();
-    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing || agg.deep !== status.deep || agg.out !== status.out) {
+    if (agg.sources !== status.sources || agg.blocked !== status.blocked || agg.playing !== status.playing || agg.drm !== status.drm || agg.deep !== status.deep || agg.out !== status.out) {
       const outChanged = agg.out !== status.out || agg.deep !== status.deep;
-      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing, deep: agg.deep, out: agg.out };
+      status = { sources: agg.sources, blocked: agg.blocked, playing: agg.playing, drm: agg.drm, foreign: agg.foreign, deep: agg.deep, out: agg.out };
       renderSiteChip();
+      renderUnheard();
       if (outChanged) renderOutput();
     }
     if (t - lastNotice > 500) { lastNotice = t; renderNotice(); }
