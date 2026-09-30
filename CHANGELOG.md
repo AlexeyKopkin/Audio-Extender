@@ -22,6 +22,7 @@ Chrome and Edge.
 - Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
 - Shortcuts for speed faster / slower / back to 1× that work without clicking into the page; they have no keys by default — set them in the browser's extension shortcuts
 - The speed keys can be changed or turned off one by one (Effects → Playback speed → Change keys)
+- Optional hold key: 2× while the key is held, the site's speed again on release (assign it under Change keys)
 - Optional: Shift + mouse wheel over a video changes the speed (Effects → Playback speed, off by default)
 - Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
 - Maximum volume (Settings): 150 / 200 / 300 / 400 / 600%. Nothing plays louder than that — not the slider, the Mixer, the shortcut, or a site saved or imported with a higher level

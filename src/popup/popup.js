@@ -306,7 +306,7 @@
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
      Phones have no keyboard: only the badge switch stays. */
-  const KEY_HINT = [['slower', 'faster', 'fx.keySlowerFaster'], ['reset', null, 'fx.keyReset'], ['toggle', null, 'fx.keyToggle'], ['back', 'forward', 'fx.keySeek']];
+  const KEY_HINT = [['slower', 'faster', 'fx.keySlowerFaster'], ['reset', null, 'fx.keyReset'], ['toggle', null, 'fx.keyToggle'], ['back', 'forward', 'fx.keySeek'], ['hold', null, 'fx.keyHold']];
   const KEY_NAMES = { Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=' };
   const keyLabel = (code) => (code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? code.slice(5)
     : code.startsWith('Numpad') ? 'Num ' + code.slice(6) : KEY_NAMES[code] || code);
