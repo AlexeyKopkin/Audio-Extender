@@ -14,7 +14,8 @@ Chrome and Edge.
   - Firefox: the first choice opens Firefox's device picker from a button on the page; on later visits the device switches over with the first click on the page
   - Chrome / Edge: the tab plays through deep mode; device names need a one-time microphone permission (nothing is recorded)
   - Not available on Firefox for Android
-- Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. They work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
+- Playback speed from 0.1× to 16×; the slider has a log scale, so the usual speeds around 1× stay easy to set. Firefox plays sound only between 0.125× and 8×; outside that range the popup says so
+- Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. The step (0.05 / 0.1 / 0.25) and the jump (5 / 10 / 15 / 30 s) can be changed. The keys work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
 - A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off)
 - Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
 - Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited

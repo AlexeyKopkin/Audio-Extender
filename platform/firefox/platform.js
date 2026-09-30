@@ -4,7 +4,8 @@
    Everything that differs between browsers lives here, behind the
    same PLATFORM interface in every build (see platform/chrome/platform.js):
      id, name, storeUrl, restrictedHosts, sidebar, strings
-   and optionally capture (deep mode; Firefox has no tab-capture API).
+   and optionally capture (deep mode; Firefox has no tab-capture API)
+   and audibleSpeed (speeds at which the browser still plays sound).
    Loaded right after shared/settings.js in the background and the popup.
    ========================================================= */
 (function (global) {
@@ -17,6 +18,7 @@
     id: 'firefox',
     name: 'Firefox',
     storeUrl: 'https://addons.mozilla.org/firefox/addon/audio-extender/',
+    audibleSpeed: [0.125, 8], // outside, Firefox plays media without sound
 
     // Firefox does not run extensions on these sites (extensions.webextensions.restrictedDomains)
     restrictedHosts: [

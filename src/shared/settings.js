@@ -15,6 +15,9 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   const G10 = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
   const G31 = [20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000];
   const MAX_GAIN = 600;
+  const SPEED_MIN = 0.1, SPEED_MAX = 16;  // Firefox plays sound only between 0.125× and 8× (PLATFORM.audibleSpeed)
+  const SPEED_STEPS = [0.05, 0.1, 0.25];  // S / D
+  const SEEK_STEPS = [5, 10, 15, 30];     // Z / X, seconds
 
   const DEFAULT_BANDS = [
     { type: 'peaking', f: 60, g: 0, q: 1 },
@@ -65,6 +68,8 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedKeys: true,        // S / D / R / G / Z / X on pages (content/speed.js)
     speedKeysOff: {},       // sites where those keys stay the site's own: { host: true }
     speedBadge: true,       // show "1.5×" briefly when the speed changes
+    speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
+    seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
   };
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -190,7 +195,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
-    G10, G31, MAX_GAIN, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
+    G10, G31, MAX_GAIN, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
     clone, merge, hostOf, normalize, effective, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
