@@ -128,12 +128,24 @@ async function editActiveSite(fn) {
   await browser.storage.local.set(AE.storeFor(data, host, s));
 }
 
-// no keyboard shortcuts on Firefox for Android
-if (browser.commands) browser.commands.onCommand.addListener((name) => {
+// Speed shortcuts have no default keys (the user assigns them); the step is the speed keys' step.
+function speedBy(s, dir) {
+  const step = AE.SPEED_STEPS.includes(data.app && data.app.speedStep) ? data.app.speedStep : 0.1;
+  const v = Math.round((s.fx.speed.value + dir * step) * 100) / 100;
+  s.fx.speed.value = Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, v));
+}
+
+function onCommand(name) {
   if (name === 'gain-up') editActiveSite((s) => { s.gain = Math.min(AE.gainCap(data.app), s.gain + GAIN_STEP); s.enabled = true; });
   else if (name === 'gain-down') editActiveSite((s) => { s.gain = Math.max(0, s.gain - GAIN_STEP); s.enabled = true; });
   else if (name === 'toggle') editActiveSite((s) => { s.enabled = !s.enabled; });
-});
+  else if (name === 'speed-up') editActiveSite((s) => speedBy(s, 1));
+  else if (name === 'speed-down') editActiveSite((s) => speedBy(s, -1));
+  else if (name === 'speed-reset') editActiveSite((s) => { s.fx.speed.value = 1; });
+}
+
+// no keyboard shortcuts on Firefox for Android
+if (browser.commands) browser.commands.onCommand.addListener(onCommand);
 
 /* ---------- lower other tabs ---------- */
 // Which tabs are currently lowered survives the event page being unloaded.

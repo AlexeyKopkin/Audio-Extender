@@ -69,6 +69,9 @@
     "toggle": {
       "suggested_key": { "default": "Alt+Shift+B" },
       "description": "__MSG_cmdToggle__"
-    }
+    },
+    "speed-up": { "description": "__MSG_cmdSpeedUp__" },
+    "speed-down": { "description": "__MSG_cmdSpeedDown__" },
+    "speed-reset": { "description": "__MSG_cmdSpeedReset__" }
   }
 }

@@ -16,5 +16,14 @@
   },
   "cmdToggle": {
     "message": "Вкл / выкл обработку"
+  },
+  "cmdSpeedUp": {
+    "message": "Скорость: быстрее"
+  },
+  "cmdSpeedDown": {
+    "message": "Скорость: медленнее"
+  },
+  "cmdSpeedReset": {
+    "message": "Скорость: 1×"
   }
 }

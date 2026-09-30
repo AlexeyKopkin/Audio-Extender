@@ -16,5 +16,14 @@
   },
   "cmdToggle": {
     "message": "Verarbeitung ein / aus"
+  },
+  "cmdSpeedUp": {
+    "message": "Geschwindigkeit: schneller"
+  },
+  "cmdSpeedDown": {
+    "message": "Geschwindigkeit: langsamer"
+  },
+  "cmdSpeedReset": {
+    "message": "Geschwindigkeit: 1×"
   }
 }
