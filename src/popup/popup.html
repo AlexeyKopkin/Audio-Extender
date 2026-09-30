@@ -385,11 +385,18 @@
       <div class="card compact">
         <div class="section-title"><svg class="ic xs"><use href="#i-sliders"/></svg><span data-i18n="set.behavior">Behavior</span></div>
         <div class="toggle-row"><span data-i18n="set.perSite">Remember settings for each site</span><label class="switch"><input type="checkbox" data-app="perSite"><span></span></label></div>
+        <div class="toggle-row"><span data-i18n="set.allowMode">Only on sites I choose</span><label class="switch"><input type="checkbox" id="allow-mode"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.autoEnable">Enable automatically on new sites</span><label class="switch"><input type="checkbox" data-app="autoEnable"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.maxGain">Maximum volume</span><select id="max-gain" class="row-select"></select></div>
         <div class="toggle-row"><span data-i18n="set.badge">Show gain on the toolbar icon</span><label class="switch"><input type="checkbox" data-app="badge"><span></span></label></div>
         <div class="toggle-row"><span data-i18n="set.animations">Spectrum and meter animations</span><label class="switch"><input type="checkbox" data-app="animations"><span></span></label></div>
         <div class="toggle-row" id="row-sidebar"><span data-i18n="set.sidebar">Open in sidebar</span><label class="switch"><input type="checkbox" data-app="sidebar"><span></span></label></div>
+      </div>
+
+      <div class="card compact hidden" id="allow-card">
+        <div class="section-title"><svg class="ic xs"><use href="#i-globe"/></svg><span data-i18n="set.allowList">Sites where it works</span><span class="count" id="allow-count">0</span></div>
+        <div id="allow-list"></div>
+        <button class="btn small hidden" id="allow-add"></button>
       </div>
 
       <div class="card compact">

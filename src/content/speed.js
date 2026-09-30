@@ -56,7 +56,7 @@
     function onKey(e) {
       if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !e.isTrusted || !env.alive()) return;
       const s = env.settings(), app = env.app();
-      if (!s || !app || !app.speedKeys || (app.speedKeysOff || {})[env.host()]) return;
+      if (!s || !app || !app.speedKeys || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
       const action = AE.speedKeyMap(app)[e.code];
       if (!action) return; // not one of ours: the page gets it untouched
       if (typing(e) || !mediaHere()) return;
@@ -184,7 +184,7 @@
     function onWheel(e) {
       if (!e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || !e.isTrusted || !env.alive()) return;
       const s = env.settings(), app = env.app();
-      if (!s || !app || !app.speedWheel || (app.speedKeysOff || {})[env.host()]) return;
+      if (!s || !app || !app.speedWheel || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
       const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
       if (!d || !overVideo(e.clientX, e.clientY)) return;
       e.preventDefault();

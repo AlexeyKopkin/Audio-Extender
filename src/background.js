@@ -75,7 +75,7 @@ async function updateBadge(tab) {
   await ready;
   const host = AE.hostOf(tab.url);
   let text = '';
-  if (data.app.badge && host) {
+  if (data.app.badge && host && AE.siteAllowed(data.app, host)) {
     const s = AE.effective(data, host);
     if (s.enabled && s.gain !== 100) text = String(s.gain);
     else if (!s.enabled) text = 'off';
