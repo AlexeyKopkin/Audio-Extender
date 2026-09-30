@@ -98,6 +98,8 @@
     el.addEventListener('loadstart', () => { started.set(el, performance.now()); resets.delete(el); if (foreign.delete(el)) report(); });
     el.addEventListener('play', () => started.set(el, performance.now()));
     el.addEventListener('ratechange', () => guardRate(el));
+    // on the element itself: a detached element is paused too, and its events never reach the document
+    for (const type of ['pause', 'ended', 'emptied']) el.addEventListener(type, checkIdle);
   }
 
   /** createMediaElementSource outputs silence for DRM media and for cross-origin media without CORS — never do that. */
@@ -150,7 +152,7 @@
       waitingGesture = false;
       removeEventListener('pointerdown', go, true);
       removeEventListener('keydown', go, true);
-      if (ownCtx) ownCtx.resume().finally(hookAll);
+      if (ownCtx && !idle) ownCtx.resume().finally(hookAll); // asleep on purpose: play wakes it
     };
     addEventListener('pointerdown', go, true);
     addEventListener('keydown', go, true);
@@ -160,6 +162,7 @@
     track(el);
     if (!route() || hooked.has(el) || blocked.has(el) || foreign.has(el)) return;
     if (!safeToHook(el)) { (el.mediaKeys ? blocked : foreign).add(el); sinkElement(el); report(); return; }
+    wake();
     const ctx = getOwnCtx();
     if (ctx.state !== 'running') {
       // Routing into a suspended context would silence the element: leave it untouched for now.
@@ -187,6 +190,43 @@
       blocked.add(el); // already captured by the page itself — its context is routed anyway
       sinkElement(el);
     }
+    checkIdle();
+    report();
+  }
+
+  /* ---------------------------------------------------------
+     Idle: a running AudioContext keeps the audio device open, and with it the computer awake.
+     Ours sleeps while none of its media plays and wakes on play. The page's own contexts are the page's.
+     --------------------------------------------------------- */
+  const IDLE_MS = 10000;
+  let idle = false;      // we suspended ownCtx
+  let idleTimer = 0;
+
+  function feeding() {
+    for (const el of media) if (hooked.has(el) && !el.paused && !el.ended) return true;
+    return false;
+  }
+
+  function checkIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = 0;
+    if (!ownCtx || idle || feeding()) return;
+    idleTimer = setTimeout(() => {
+      idleTimer = 0;
+      if (idle || ownCtx.state !== 'running' || feeding()) return;
+      idle = true;
+      chains.get(ownCtx).holdSink(true);
+      ownCtx.suspend().catch(() => {}).then(report);
+    }, IDLE_MS);
+  }
+
+  /** Called before media starts: the context resumes while the element begins, so nothing is lost. */
+  function wake() {
+    if (!idle) return;
+    idle = false;
+    ownCtx.resume().catch(() => {});
+    chains.get(ownCtx).holdSink(false);
+    checkIdle(); // in case the play never happens (autoplay refused)
     report();
   }
 
@@ -221,7 +261,9 @@
     report();
   }
 
-  function sinkChain(ch) { ch.setSink(sink).catch((e) => sinkFailed(e)); }
+  function sinkChain(ch) {
+    ch.setSink(sink).then(() => { if (idle && ch === chains.get(ownCtx)) ch.holdSink(true); }, (e) => sinkFailed(e));
+  }
 
   function sinkFailed(e) {
     if (!sink) return;
@@ -269,12 +311,19 @@
   const origPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function () {
     track(this);
+    if (hooked.has(this)) wake();
     if (route()) hook(this);
     return origPlay.apply(this, arguments);
   };
   // 'playing' too: after a source switch the element may resume without a new 'play'
   for (const type of ['play', 'playing']) {
-    document.addEventListener(type, (e) => { if (e.target instanceof HTMLMediaElement) { track(e.target); if (route()) hook(e.target); } }, true);
+    document.addEventListener(type, (e) => {
+      const el = e.target;
+      if (!(el instanceof HTMLMediaElement)) return;
+      track(el);
+      if (hooked.has(el)) wake(); // started from the player's own controls
+      if (route()) hook(el);
+    }, true);
   }
 
   /* ---------------------------------------------------------
@@ -294,7 +343,7 @@
       else playing++;
     });
     chains.forEach((ch, ctx) => { if (ctx !== ownCtx && ctx.state === 'running') sources++; });
-    return { v: PROTOCOL, sources, blocked: blockedCount, playing, active };
+    return { v: PROTOCOL, sources, blocked: blockedCount, playing, active, idle };
   }
 
   function report() { send({ type: 'status', ...status() }); }

@@ -308,6 +308,13 @@
         this.sinkId = '';
       }
 
+      /** While the context sleeps, the hidden element would keep the other device open: let it go too. */
+      holdSink(paused) {
+        if (!this.sinkEl) return;
+        if (paused) this.sinkEl.pause();
+        else origPlay.call(this.sinkEl).catch(() => {});
+      }
+
       close() { clearInterval(this.agcTimer); if (this.sinkEl) this.sinkToDestination(); }
     }
 
