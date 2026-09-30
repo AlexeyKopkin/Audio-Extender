@@ -15,6 +15,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   const G10 = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
   const G31 = [20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000];
   const MAX_GAIN = 600;
+  const GAIN_CAPS = [150, 200, 300, 400, 600]; // app.maxGain: the user's own ceiling (speakers, hearing)
   const SPEED_MIN = 0.1, SPEED_MAX = 16;  // Firefox plays sound only between 0.125× and 8× (PLATFORM.audibleSpeed)
   const SPEED_STEPS = [0.05, 0.1, 0.25];  // S / D
   const SEEK_STEPS = [5, 10, 15, 30];     // Z / X, seconds
@@ -70,6 +71,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedBadge: true,       // show "1.5×" briefly when the speed changes
     speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
     seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
+    maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
   };
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -117,12 +119,17 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     return o && typeof o.id === 'string' && o.id ? { id: o.id, label: String(o.label || '') } : null;
   }
 
-  /** Settings that apply to `host`, taking per-site and auto-enable prefs into account. */
+  /** The highest gain the user allows (Settings → Maximum volume). */
+  const gainCap = (app) => (app && GAIN_CAPS.includes(app.maxGain) ? app.maxGain : MAX_GAIN);
+
+  /** Settings that apply to `host`, taking per-site and auto-enable prefs into account.
+   *  The gain is capped here, so no stored or imported value can play louder than the maximum. */
   function effective(data, host) {
     const d = normalize(data);
     const site = d.app.perSite && host ? d.sites[host] : null;
     const s = merge(d.defaults, site);
     if (d.app.perSite && !site && !d.app.autoEnable) s.enabled = false;
+    s.gain = Math.min(s.gain, gainCap(d.app));
     return s;
   }
 
@@ -195,7 +202,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
-    G10, G31, MAX_GAIN, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
+    G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
     clone, merge, hostOf, normalize, effective, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };

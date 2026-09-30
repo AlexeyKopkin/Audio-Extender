@@ -130,7 +130,7 @@ async function editActiveSite(fn) {
 
 // no keyboard shortcuts on Firefox for Android
 if (browser.commands) browser.commands.onCommand.addListener((name) => {
-  if (name === 'gain-up') editActiveSite((s) => { s.gain = Math.min(AE.MAX_GAIN, s.gain + GAIN_STEP); s.enabled = true; });
+  if (name === 'gain-up') editActiveSite((s) => { s.gain = Math.min(AE.gainCap(data.app), s.gain + GAIN_STEP); s.enabled = true; });
   else if (name === 'gain-down') editActiveSite((s) => { s.gain = Math.max(0, s.gain - GAIN_STEP); s.enabled = true; });
   else if (name === 'toggle') editActiveSite((s) => { s.enabled = !s.enabled; });
 });

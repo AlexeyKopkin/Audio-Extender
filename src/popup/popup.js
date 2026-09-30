@@ -263,6 +263,7 @@
     $$('[data-app]').forEach((el) => { el.checked = !!data.app[el.dataset.app]; });
     root.classList.toggle('no-anim', !data.app.animations);
     renderSpeedKeys();
+    renderMaxGain();
   }
 
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
@@ -284,6 +285,17 @@
     const text = (k) => (k === 'fx.keySlowerFaster' ? `${tr(k)} ±${keyStep()}` : tr(k, { s: keySeek() }));
     setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => `<span><kbd>${a}</kbd>${b ? ` <kbd>${b}</kbd>` : ''} ${esc(text(k))}</span>`).join(' · '));
   }
+  function renderMaxGain() {
+    setHTML($('#max-gain'), AE.GAIN_CAPS.map((v) => `<option value="${v}">${v}%</option>`).join(''));
+    $('#max-gain').value = AE.gainCap(data.app);
+  }
+  $('#max-gain').addEventListener('change', (e) => {
+    data.app.maxGain = +e.target.value;
+    saveApp();
+    audio = AE.effective(data, host); // a louder site plays at the new maximum right away
+    if (link) link.post({ type: 'live', settings: audio });
+    renderAll();
+  });
   $('#speed-step').addEventListener('change', (e) => { data.app.speedStep = +e.target.value; saveApp(); renderSpeedKeys(); });
   $('#seek-step').addEventListener('change', (e) => { data.app.seekSeconds = +e.target.value; saveApp(); renderSpeedKeys(); });
   $('#speed-site').addEventListener('change', (e) => {
@@ -595,23 +607,32 @@
      BOOSTER
      ========================================================= */
   const boost = $('#boost');
-  const G = { cx: 100, cy: 100, r: 84, start: 135, sweep: 270, max: AE.MAX_GAIN };
+  const G = { cx: 100, cy: 100, r: 84, start: 135, sweep: 270, max: 0 };
   const angleOf = (v) => ((G.start + (v / G.max) * G.sweep) * Math.PI) / 180;
 
-  (function buildTicks() {
+  /** Gauge ticks, slider, scale and chips follow the user's maximum volume (Settings). */
+  function buildGainScale() {
+    const cap = AE.gainCap(data.app);
+    if (cap === G.max) return;
+    G.max = cap;
+    boost.max = cap;
+    const n = cap % 20 === 0 ? 4 : 2; // labels on round numbers: 0/75/150, 0/50/…/200, 0/150/…/600
+    setHTML($('#boost-scale'), Array.from({ length: n + 1 }, (_, i) => `<span>${(cap / n) * i}%</span>`).join(''));
+    $$('#boost-presets .chip').forEach((c) => c.classList.toggle('hidden', +c.dataset.v > cap));
     let s = '';
-    for (let v = 0; v <= G.max; v += 50) {
-      const a = angleOf(v), major = v % 100 === 0, unity = v === 100;
-      const r1 = 70, r2 = major ? 76 : 74;
-      const cls = 'g-tick' + (major ? ' major' : '') + (unity ? ' unity' : '');
+    const major = cap <= 300 ? 50 : 100; // labelled ticks: enough numbers on a short scale too
+    for (let v = 0; v <= G.max; v += major / 2) {
+      const a = angleOf(v), isMajor = v % major === 0, unity = v === 100;
+      const r1 = 70, r2 = isMajor ? 76 : 74;
+      const cls = 'g-tick' + (isMajor ? ' major' : '') + (unity ? ' unity' : '');
       s += `<line class="${cls}" x1="${G.cx + r1 * Math.cos(a)}" y1="${G.cy + r1 * Math.sin(a)}" x2="${G.cx + r2 * Math.cos(a)}" y2="${G.cy + r2 * Math.sin(a)}"/>`;
-      if (major && v !== 0 && v !== G.max) {
+      if (isMajor && v !== 0 && v !== G.max) {
         const rl = 62;
         s += `<text class="g-tick-label${unity ? ' unity' : ''}" x="${G.cx + rl * Math.cos(a)}" y="${G.cy + rl * Math.sin(a)}">${v}</text>`;
       }
     }
     setSVG($('#gauge-ticks'), s);
-  })();
+  }
 
   function updateGauge() {
     const v = audio.gain;
@@ -626,7 +647,7 @@
     $$('#boost-presets .chip').forEach((c) => c.classList.toggle('active', +c.dataset.v === v));
   }
   function setGain(v) {
-    audio.gain = clamp(Math.round(v / 5) * 5, 0, AE.MAX_GAIN);
+    audio.gain = clamp(Math.round(v / 5) * 5, 0, G.max);
     boost.value = audio.gain;
     paintRange(boost);
     commit();
@@ -1240,7 +1261,7 @@
           <div class="mix-body">
             <div class="mix-title"><span>${esc(t.title || h)}</span>${t.id === current ? `<em class="tag">${esc(tr('mixer.thisTab'))}</em>` : ''}</div>
             <div class="mix-meta">${esc(meta)}</div>
-            <div class="mix-controls"><input type="range" min="0" max="${AE.MAX_GAIN}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
+            <div class="mix-controls"><input type="range" min="0" max="${AE.gainCap(data.app)}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
             <div class="mini-meter"><i></i></div>
             ${OUT_MODE ? `<select class="mix-dev" aria-label="${esc(tr('dev.title'))}" title="${esc(outHint(h, t.id === current) || tr('dev.title'))}">${optionsHTML(h)}</select>` : ''}
           </div>
@@ -1457,6 +1478,7 @@
      Render everything / reload from storage
      --------------------------------------------------------- */
   function renderAll() {
+    buildGainScale();
     renderAppControls();
     renderBindings();
     renderAutoEq();
