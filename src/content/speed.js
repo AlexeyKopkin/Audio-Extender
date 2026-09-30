@@ -4,7 +4,8 @@
    Loaded right before content/content.js, which creates it with
    window.__audioExtenderSpeed(env) and tells it about speed changes.
 
-   Keys on the page (by physical key, so any keyboard layout works):
+   Keys on the page (by physical key, so any keyboard layout works;
+   the user can change them: app.speedKeyMap, see AE.speedKeyMap):
      S / D  slower / faster (step: app.speedStep, 0.1)   R  back to 1×
      G      1× ↔ the last other speed  Z / X  back / forward (app.seekSeconds, 10 s)
    Range 0.1–16×.
@@ -24,7 +25,6 @@
 
   if (window.__audioExtenderSpeed) return;
 
-  const KEYS = { KeyS: 'slower', KeyD: 'faster', KeyR: 'reset', KeyG: 'toggle', KeyZ: 'back', KeyX: 'forward' };
   const round = (v) => Math.round(v * 100) / 100;
   const clamp = (v) => Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, round(v)));
   const pick = (v, allowed, def) => (allowed.includes(v) ? v : def);
@@ -50,10 +50,11 @@
     }
 
     function onKey(e) {
-      const action = KEYS[e.code];
-      if (!action || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !e.isTrusted || !env.alive()) return;
+      if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !e.isTrusted || !env.alive()) return;
       const s = env.settings(), app = env.app();
       if (!s || !app || !app.speedKeys || (app.speedKeysOff || {})[env.host()]) return;
+      const action = AE.speedKeyMap(app)[e.code];
+      if (!action) return; // not one of ours: the page gets it untouched
       if (typing(e) || !mediaHere()) return;
 
       const cur = s.fx.speed.value;

@@ -56,6 +56,11 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   };
 
   /** Extension-wide preferences. */
+  // Speed keys on pages (content/speed.js): KeyboardEvent.code per action ('' = off), so any layout works
+  const SPEED_KEYS = { slower: 'KeyS', faster: 'KeyD', reset: 'KeyR', toggle: 'KeyG', back: 'KeyZ', forward: 'KeyX' };
+  // keys that can be assigned: letters, digits, punctuation, F1–F12 — never Tab / Enter / Esc / Space / arrows
+  const KEY_CODE_OK = /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|F([1-9]|1[0-2])|Comma|Period|Slash|Semicolon|Quote|Backquote|BracketLeft|BracketRight|Backslash|Minus|Equal)$/;
+
   const DEFAULT_APP = {
     theme: 'neon',
     lang: 'en',
@@ -72,6 +77,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
     seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
     speedWheel: false,      // Shift + mouse wheel over a video changes the speed
+    speedKeyMap: { ...SPEED_KEYS }, // action → key code ('' = off)
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
   };
 
@@ -119,6 +125,18 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     const o = host && data && isObj(data.outputs) ? data.outputs[host] : null;
     return o && typeof o.id === 'string' && o.id ? { id: o.id, label: String(o.label || '') } : null;
   }
+
+  /** Speed keys in use: { code: action }. Unusable codes and a second use of the same key are dropped. */
+  function speedKeyMap(app) {
+    const m = { ...SPEED_KEYS, ...(app && isObj(app.speedKeyMap) ? app.speedKeyMap : {}) };
+    const out = {};
+    for (const a of Object.keys(SPEED_KEYS)) {
+      const c = m[a];
+      if (typeof c === 'string' && KEY_CODE_OK.test(c) && !out[c]) out[c] = a;
+    }
+    return out;
+  }
+  const speedKeyOk = (code) => KEY_CODE_OK.test(code);
 
   /** The highest gain the user allows (Settings → Maximum volume). */
   const gainCap = (app) => (app && GAIN_CAPS.includes(app.maxGain) ? app.maxGain : MAX_GAIN);
@@ -203,7 +221,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
 
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
-    G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
+    G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, SPEED_KEYS, speedKeyMap, speedKeyOk, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
     clone, merge, hostOf, normalize, effective, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
