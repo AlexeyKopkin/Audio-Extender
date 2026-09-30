@@ -83,6 +83,10 @@
         this.clipper = ctx.createWaveShaper();
         this.clipper.curve = softClipCurve();
         this.clipper.oversample = '2x';
+        // gain reduction is measured (peak before the limiter vs after the clipper): Firefox's
+        // DynamicsCompressorNode.reduction reports about −1 dB even when nothing is limited
+        this.grIn = ctx.createAnalyser(); this.grIn.fftSize = 2048;
+        this.grOut = ctx.createAnalyser(); this.grOut.fftSize = 2048;
 
         // Metering (after processing)
         this.meterIn = gain();
@@ -140,7 +144,11 @@
           if (matrixOn()) { origConnect.call(cur, this.mxIn); cur = this.mxMerge; }
           if (env.S.fx.norm.on) { origConnect.call(cur, this.agcTap); link(this.agc); }
           link(this.boost);
-          if (env.S.limiter.on) { link(this.limiter); link(this.limiterTrim); link(this.clipper); }
+          if (env.S.limiter.on) {
+            origConnect.call(cur, this.grIn);
+            link(this.limiter); link(this.limiterTrim); link(this.clipper);
+            origConnect.call(cur, this.grOut);
+          }
         }
         origConnect.call(cur, this.out);
 
@@ -218,8 +226,22 @@
         return {
           l: read(this.anL),
           r: read(this.anR),
-          gr: env.active && env.S.limiter.on ? this.limiter.reduction : 0,
+          gr: env.active && env.S.limiter.on ? this.reduction() : 0,
         };
+      }
+
+      /** Limiter + clipper gain reduction in dB (≤ 0), from the peaks around them. */
+      reduction() {
+        const peak = (an) => {
+          an.getFloatTimeDomainData(this.tBuf);
+          let p = 0;
+          for (let i = 0; i < this.tBuf.length; i++) { const v = Math.abs(this.tBuf[i]); if (v > p) p = v; }
+          return p;
+        };
+        const pin = peak(this.grIn), pout = peak(this.grOut);
+        if (pin < 1e-4) return 0;
+        const db = linToDb(pout) - linToDb(pin);
+        return db < -0.2 ? db : 0; // window edges and the limiter's look-ahead: ignore tiny differences
       }
 
       /** 72 log-spaced bars in 0…1, 20 Hz – 20 kHz. */

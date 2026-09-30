@@ -10,7 +10,7 @@ The extension processes audio inside the page — no tab capture, so no recordin
 AutoEq → EQ → bass → dialogue → night mode → stereo (width / mono / balance) → normalization → gain → limiter → soft clipper
 ```
 
-- Nothing is touched while all settings are neutral — media is only routed once processing is actually needed (or once the tab plays on another output device).
+- While processing is on, playing media is routed through the chain even at neutral settings, so the meters show it and the limiter guards it. With processing off (the power button) the page is left untouched.
 - Audio that Web Audio would turn silent is never routed: DRM (EME) media and media from another domain without CORS keep playing untouched, and the popup says so.
 - A media element is only routed once its AudioContext is actually rendering, so autoplay rules or a slow audio device can't cause a gap.
 - **Deep mode (Chrome / Edge, on demand):** for sources the page can't hand over, the popup offers to capture the whole tab (`tabCapture`) and play it through the same chain in an offscreen document (`platform/chrome/capture.js`, `offscreen.js`). The page engine of that tab switches to bypass so nothing is processed twice; if the capture can't start, the tab keeps playing as before. Firefox has no tab-capture API, so it doesn't offer this mode.
@@ -26,6 +26,7 @@ src/                     shared by all browsers
   shared/settings.js     settings model (defaults, per-site logic, schema version)
   content/chain.js       processing chain (one per AudioContext)
   content/page.js        audio engine (runs in the page)
+  content/speed.js       speed keys and the speed badge (isolated world, before content.js)
   content/content.js     bridge between the page and the extension
   popup/                 popup / sidebar UI (popup.js, api.js, i18n.js, popup.css)
   popup/preview.js       demo data for the design preview (not in the store packages)

@@ -27,6 +27,14 @@
     document.dispatchEvent(new CustomEvent(TO_PAGE, { detail: JSON.stringify(msg) }));
   }
 
+  /** New settings for this frame; the speed badge confirms a speed change. */
+  function setSettings(next) {
+    const prev = settings && settings.fx.speed.value;
+    settings = next;
+    pushSettings();
+    if (prev != null && next && next.fx.speed.value !== prev) speed.changed(next.fx.speed.value);
+  }
+
   function pushSettings() {
     if (!settings) return;
     if (bypass) toPage({ type: 'settings', settings, duck: 1, active: false });
@@ -47,8 +55,7 @@
   async function refresh() {
     if (host === null) return;
     data = await browser.storage.local.get(AE.KEYS);
-    settings = AE.effective(data, host);
-    pushSettings();
+    setSettings(AE.effective(data, host));
     output.refresh();
   }
 
@@ -182,6 +189,25 @@
 
   const outStatus = () => (output.supported ? { out: output.state } : {});
 
+  /* ---------------------------------------------------------
+     Speed keys and badge (content/speed.js). A key press is stored as the
+     site's speed, exactly like the popup slider.
+     --------------------------------------------------------- */
+  const speed = window.__audioExtenderSpeed({
+    alive: () => !!(browser.runtime && browser.runtime.id), // false in a script left behind by an update
+    settings: () => settings,
+    app: () => (data ? AE.normalize(data).app : null),
+    host: () => host,
+    async setSpeed(v) {
+      if (!settings) return;
+      setSettings({ ...settings, fx: { ...settings.fx, speed: { ...settings.fx.speed, value: v } } });
+      const cur = await browser.storage.local.get(AE.KEYS);
+      const s = AE.effective(cur, host);
+      s.fx.speed.value = v;
+      await browser.storage.local.set(AE.storeFor(cur, host, s));
+    },
+  });
+
   // Popup / sidebar: live settings while dragging, and metering polls
   browser.runtime.onConnect.addListener((port) => {
     if (port.name !== 'ae-tab') return;
@@ -189,8 +215,7 @@
     port.onDisconnect.addListener(() => ports.delete(port));
     port.onMessage.addListener((msg) => {
       if (msg.type === 'live') {
-        settings = msg.settings;
-        pushSettings();
+        setSettings(msg.settings);
       } else if (msg.type === 'poll') {
         lastReply = null;
         toPage({ type: 'poll', want: msg.want || [] });   // answered synchronously

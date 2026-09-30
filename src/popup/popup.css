@@ -727,6 +727,9 @@ option { background: var(--bg-2); color: var(--text); }
   color: var(--text);
 }
 .toggle-row + .toggle-row { border-top: 1px solid var(--border); }
+.speed-keys .toggle-row { border-top: 1px solid var(--border); }
+.keys-hint { margin-top: 8px; line-height: 1.6; }
+.keys-hint kbd { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 5px; text-align: center; font: 600 10.5px/17px inherit; color: var(--text); background: var(--surface-3); border: 1px solid var(--border); }
 .fx .toggle-row { padding-bottom: 0; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
 
 /* ================= MIXER ================= */

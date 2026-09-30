@@ -15,7 +15,7 @@
 const DUCK_FACTOR = 0.3;
 const GAIN_STEP = 10;
 const SCRIPTS_MAIN = ['content/chain.js', 'content/page.js'];
-const SCRIPTS_ISOLATED = ['shared/settings.js', 'content/content.js'];
+const SCRIPTS_ISOLATED = ['shared/settings.js', 'content/speed.js', 'content/content.js'];
 
 let data = AE.normalize({});
 let ready = loadData();
