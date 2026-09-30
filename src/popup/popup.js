@@ -178,7 +178,7 @@
       if (sw) card.classList.toggle('on', sw.checked);
     });
     updateGauge();
-    $$('#speed-presets .chip').forEach((c) => c.classList.toggle('active', +c.dataset.v === audio.fx.speed.value));
+    renderSpeed();
     const pw = $('#btn-power');
     pw.classList.toggle('on', audio.enabled);
     pw.setAttribute('aria-pressed', audio.enabled);
@@ -268,14 +268,24 @@
   /* Speed keys on pages (content/speed.js): global switch, per-site switch, key hint.
      Phones have no keyboard: only the badge switch stays. */
   const KEY_HINT = [['S', 'D', 'fx.keySlowerFaster'], ['R', null, 'fx.keyReset'], ['G', null, 'fx.keyToggle'], ['Z', 'X', 'fx.keySeek']];
+  const keyStep = () => (AE.SPEED_STEPS.includes(data.app.speedStep) ? data.app.speedStep : 0.1);
+  const keySeek = () => (AE.SEEK_STEPS.includes(data.app.seekSeconds) ? data.app.seekSeconds : 10);
   function renderSpeedKeys() {
     $('#speed-keys').classList.toggle('hidden', !!MOBILE);
     const siteRow = $('#row-speed-site');
     siteRow.classList.toggle('hidden', !host || kind !== 'web' || !data.app.speedKeys);
     $('#speed-site-label').textContent = tr('fx.speedKeysSite', { site: host || '' });
     $('#speed-site').checked = !(data.app.speedKeysOff || {})[host];
-    setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => `<kbd>${a}</kbd>${b ? ` <kbd>${b}</kbd>` : ''} ${esc(tr(k))}`).join(' · '));
+    $('#speed-opts').classList.toggle('hidden', !data.app.speedKeys);
+    setHTML($('#speed-step'), AE.SPEED_STEPS.map((v) => `<option value="${v}">±${v}×</option>`).join(''));
+    setHTML($('#seek-step'), AE.SEEK_STEPS.map((v) => `<option value="${v}">${esc(tr('fx.seconds', { s: v }))}</option>`).join(''));
+    $('#speed-step').value = keyStep();
+    $('#seek-step').value = keySeek();
+    const text = (k) => (k === 'fx.keySlowerFaster' ? `${tr(k)} ±${keyStep()}` : tr(k, { s: keySeek() }));
+    setHTML($('#speed-keys-hint'), KEY_HINT.map(([a, b, k]) => `<span><kbd>${a}</kbd>${b ? ` <kbd>${b}</kbd>` : ''} ${esc(text(k))}</span>`).join(' · '));
   }
+  $('#speed-step').addEventListener('change', (e) => { data.app.speedStep = +e.target.value; saveApp(); renderSpeedKeys(); });
+  $('#seek-step').addEventListener('change', (e) => { data.app.seekSeconds = +e.target.value; saveApp(); renderSpeedKeys(); });
   $('#speed-site').addEventListener('change', (e) => {
     const off = { ...(data.app.speedKeysOff || {}) };
     if (e.target.checked) delete off[host]; else off[host] = true;
@@ -670,11 +680,43 @@
   /* =========================================================
      EFFECTS
      ========================================================= */
+  /* Speed slider: logarithmic 0.1–16×, so 1× sits near the middle and the fine steps stay where they matter. */
   const speed = $('#speed');
+  const SPEED_SPAN = Math.log(AE.SPEED_MAX / AE.SPEED_MIN);
+  const AUDIBLE = PLATFORM.audibleSpeed || [0, Infinity];
+  const speedToPos = (v) => Math.round((Math.log(Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, v)) / AE.SPEED_MIN) / SPEED_SPAN) * 1000);
+  function posToSpeed(p) {
+    const v = AE.SPEED_MIN * Math.exp((p / 1000) * SPEED_SPAN);
+    const q = v < 4 ? 0.05 : v < 8 ? 0.25 : 0.5;
+    return Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, +(Math.round(v / q) * q).toFixed(2)));
+  }
+  setHTML($('#speed-scale'), [0.1, 0.25, 0.5, 1, 2, 4, 8, 16].map((v) => `<span style="left:${speedToPos(v) / 10}%">${v}</span>`).join(''));
+
+  /** Pill, chips and the "no sound" note from `v`; the thumb too unless the user is dragging it. */
+  function renderSpeed(v = audio.fx.speed.value, moveThumb = true) {
+    if (moveThumb) speed.value = speedToPos(v);
+    paintRange(speed);
+    $('#fx-speed').textContent = fmt.speed(v);
+    $$('#speed-presets .chip').forEach((c) => c.classList.toggle('active', +c.dataset.v === v));
+    $('#speed-muted').classList.toggle('hidden', v >= AUDIBLE[0] && v <= AUDIBLE[1]);
+  }
+  speed.addEventListener('input', () => {
+    audio.fx.speed.value = posToSpeed(+speed.value);
+    renderSpeed(audio.fx.speed.value, false);
+    commit();
+  });
+  // arrow keys: 0.05× per press (one slider position would be far less than a visible step)
+  speed.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    audio.fx.speed.value = Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, +(audio.fx.speed.value + d * 0.05).toFixed(2)));
+    renderSpeed();
+    commit();
+  });
   $$('#speed-presets .chip').forEach((c) => c.addEventListener('click', () => {
     audio.fx.speed.value = +c.dataset.v;
-    speed.value = audio.fx.speed.value;
-    paintRange(speed);
+    renderSpeed();
     commit();
   }));
 

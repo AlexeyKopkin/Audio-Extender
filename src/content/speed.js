@@ -5,8 +5,9 @@
    window.__audioExtenderSpeed(env) and tells it about speed changes.
 
    Keys on the page (by physical key, so any keyboard layout works):
-     S / D  slower / faster by 0.1     R  back to 1×
-     G      1× ↔ the last other speed  Z / X  back / forward 10 s
+     S / D  slower / faster (step: app.speedStep, 0.1)   R  back to 1×
+     G      1× ↔ the last other speed  Z / X  back / forward (app.seekSeconds, 10 s)
+   Range 0.1–16×.
    Never while typing or with a modifier, only in frames with media.
    A change is stored as the site's speed, like the popup slider.
 
@@ -18,10 +19,10 @@
 
   if (window.__audioExtenderSpeed) return;
 
-  const MIN = 0.25, MAX = 4, STEP = 0.1, SEEK = 10;
   const KEYS = { KeyS: 'slower', KeyD: 'faster', KeyR: 'reset', KeyG: 'toggle', KeyZ: 'back', KeyX: 'forward' };
   const round = (v) => Math.round(v * 100) / 100;
-  const clamp = (v) => Math.min(MAX, Math.max(MIN, round(v)));
+  const clamp = (v) => Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, round(v)));
+  const pick = (v, allowed, def) => (allowed.includes(v) ? v : def);
 
   /** env: { alive(), settings(), app(), host(), setSpeed(v) } */
   function createSpeed(env) {
@@ -54,13 +55,15 @@
       if (action === 'back' || action === 'forward') {
         const el = target();
         if (!el || !isFinite(el.currentTime)) return;
-        const d = action === 'back' ? -SEEK : SEEK;
+        const seek = pick(app.seekSeconds, AE.SEEK_STEPS, 10);
+        const d = action === 'back' ? -seek : seek;
         const end = isFinite(el.duration) ? el.duration : Infinity;
         el.currentTime = Math.max(0, Math.min(end, el.currentTime + d));
       } else {
+        const step = pick(app.speedStep, AE.SPEED_STEPS, 0.1);
         let v = cur;
-        if (action === 'slower') v = clamp(cur - STEP);
-        else if (action === 'faster') v = clamp(cur + STEP);
+        if (action === 'slower') v = clamp(cur - step);
+        else if (action === 'faster') v = clamp(cur + step);
         else if (action === 'reset') v = 1;
         else if (action === 'toggle') v = cur !== 1 ? 1 : last;
         if (cur !== 1 && v === 1) last = cur;
