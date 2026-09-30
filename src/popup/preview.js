@@ -6,6 +6,7 @@
    on demo tabs, levels and spectrum; settings are kept in localStorage.
    Tab, theme, language and phone layout can be set in the URL:
      popup.html#eq&theme=cyber&lang=de&mobile
+   blocked=drm / blocked=foreign: the current tab's audio can't be processed.
    ========================================================= */
 (() => {
   'use strict';
@@ -13,6 +14,7 @@
 
   const { context, pageKind } = window.API_CORE;
   const mobilePreview = /[#&?]mobile\b/.test(location.href); // phone layout
+  const blockedPreview = (/[#&?]blocked=(drm|foreign)\b/.exec(location.href) || [])[1] || '';
 
   /* ---------------------------------------------------------
      Demo data for the design preview
@@ -114,7 +116,8 @@
           }
           const lim = settings && settings.limiter.on;
           const reply = {
-            type: 'reply', frame: 'preview', top: true, v: AE.PROTOCOL, sources: playing ? 2 : 0, blocked: 0, active: true,
+            type: 'reply', frame: 'preview', top: true, v: AE.PROTOCOL, sources: playing && !blockedPreview ? 2 : 0, blocked: blockedPreview ? 1 : 0, active: true,
+            drm: blockedPreview === 'drm' ? 1 : 0, foreign: blockedPreview === 'foreign' ? 1 : 0,
             levels: {
               l: { peak: lim ? Math.min(lv.l, 0.97) : lv.l, rms: lv.l * 0.5 },
               r: { peak: lim ? Math.min(lv.r, 0.97) : lv.r, rms: lv.r * 0.5 },

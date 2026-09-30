@@ -126,6 +126,8 @@
         <input type="range" id="boost" min="0" max="600" step="5" value="100" data-bind="gain" aria-label="Gain">
         <div class="range-scale" id="boost-scale"><span>0%</span><span>150%</span><span>300%</span><span>450%</span><span>600%</span></div>
 
+        <p class="boost-state hidden" id="boost-state"><span id="boost-state-text"></span> <button class="link-btn hidden" id="boost-state-btn" data-i18n="deep.enable">Deep mode</button></p>
+
         <div class="chips" id="boost-presets">
           <button class="chip" data-v="100">100%</button>
           <button class="chip" data-v="150">150%</button>

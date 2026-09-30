@@ -37,6 +37,7 @@
   const hooked = new WeakMap();      // element -> MediaElementAudioSourceNode
   const blocked = new WeakSet();     // elements we must never touch: DRM, or captured by the page itself
   const foreign = new WeakSet();     // current source is cross-origin without CORS — re-checked when the source changes
+  const drmSeen = new WeakSet();     // blocked because of DRM (encrypted event / setMediaKeys), for the popup's explanation
   let speedApplied = false;
   const started = new WeakMap();     // element -> when its media last (re)started: our speed wins shortly after
   const resets = new WeakMap();      // element -> how often we re-applied the speed since then
@@ -299,13 +300,13 @@
   const origSetMediaKeys = HTMLMediaElement.prototype.setMediaKeys;
   if (origSetMediaKeys) {
     HTMLMediaElement.prototype.setMediaKeys = function (keys) {
-      if (keys) { track(this); if (!hooked.has(this)) { blocked.add(this); sinkElement(this); } }
+      if (keys) { track(this); drmSeen.add(this); if (!hooked.has(this)) { blocked.add(this); sinkElement(this); } }
       return origSetMediaKeys.apply(this, arguments);
     };
   }
   document.addEventListener('encrypted', (e) => {
     const el = e.target;
-    if (el instanceof HTMLMediaElement && !hooked.has(el)) { track(el); blocked.add(el); sinkElement(el); report(); }
+    if (el instanceof HTMLMediaElement && !hooked.has(el)) { track(el); drmSeen.add(el); blocked.add(el); sinkElement(el); report(); }
   }, true);
 
   const origPlay = HTMLMediaElement.prototype.play;
@@ -334,16 +335,20 @@
   }
 
   function status() {
-    // sources: processed; blocked: can't be processed; playing: audible but untouched (neutral settings, not hooked yet)
-    let sources = 0, blockedCount = 0, playing = 0;
+    // sources: processed; blocked: can't be processed (drm: copy-protected, foreign: another domain without CORS);
+    // playing: audible but untouched (neutral settings, not hooked yet)
+    let sources = 0, blockedCount = 0, playing = 0, drm = 0, foreignCount = 0;
     media.forEach((el) => {
       if (el.paused || el.muted) return;
       if (hooked.has(el)) sources++;
-      else if (blocked.has(el) || foreign.has(el)) blockedCount++;
-      else playing++;
+      else if (blocked.has(el) || foreign.has(el)) {
+        blockedCount++;
+        if (el.mediaKeys || drmSeen.has(el)) drm++;
+        else if (foreign.has(el)) foreignCount++;
+      } else playing++;
     });
     chains.forEach((ch, ctx) => { if (ctx !== ownCtx && ctx.state === 'running') sources++; });
-    return { v: PROTOCOL, sources, blocked: blockedCount, playing, active, idle };
+    return { v: PROTOCOL, sources, blocked: blockedCount, playing, active, idle, drm, foreign: foreignCount };
   }
 
   function report() { send({ type: 'status', ...status() }); }
