@@ -71,6 +71,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     speedBadge: true,       // show "1.5×" briefly when the speed changes
     speedStep: 0.1,         // S / D step (one of SPEED_STEPS)
     seekSeconds: 10,        // Z / X jump (one of SEEK_STEPS)
+    speedWheel: false,      // Shift + mouse wheel over a video changes the speed
     maxGain: MAX_GAIN,      // highest gain anywhere (one of GAIN_CAPS)
   };
 

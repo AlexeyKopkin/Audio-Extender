@@ -8,6 +8,9 @@
      S / D  slower / faster (step: app.speedStep, 0.1)   R  back to 1×
      G      1× ↔ the last other speed  Z / X  back / forward (app.seekSeconds, 10 s)
    Range 0.1–16×.
+   Shift + mouse wheel over a video: faster / slower by the same step
+   (app.speedWheel, off by default; the listener exists only while it is on,
+   because a non-passive wheel listener can slow down scrolling).
    Never while typing or with a modifier, only in frames with media.
    A change is stored as the site's speed, like the popup slider.
 
@@ -76,6 +79,43 @@
     }
     addEventListener('keydown', onKey, true);
 
+    /* ---------- Shift + wheel over a video ---------- */
+    let wheelOn = false, lastWheel = 0;
+
+    function overVideo(x, y) {
+      return [...document.querySelectorAll('video')].some((v) => {
+        const r = v.getBoundingClientRect();
+        return r.width > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+      });
+    }
+
+    function onWheel(e) {
+      if (!e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || !e.isTrusted || !env.alive()) return;
+      const s = env.settings(), app = env.app();
+      if (!s || !app || !app.speedWheel || (app.speedKeysOff || {})[env.host()]) return;
+      const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
+      if (!d || !overVideo(e.clientX, e.clientY)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const now = performance.now();
+      if (now - lastWheel < 80) return; // touchpads send a burst of small events: one step per gesture tick
+      lastWheel = now;
+      const cur = s.fx.speed.value;
+      const v = clamp(cur + Math.sign(-d) * pick(app.speedStep, AE.SPEED_STEPS, 0.1));
+      if (v !== cur) env.setSpeed(v);
+      else badge(v);
+    }
+
+    /** Settings changed: add or remove the wheel listener. */
+    function sync() {
+      const app = env.app();
+      const want = !!(app && app.speedWheel);
+      if (want === wheelOn) return;
+      wheelOn = want;
+      if (want) addEventListener('wheel', onWheel, { capture: true, passive: false });
+      else removeEventListener('wheel', onWheel, { capture: true });
+    }
+
     /* ---------- badge ---------- */
     let box = null, timer = 0;
 
@@ -125,6 +165,7 @@
     return {
       /** The site's speed changed (keys, popup, another frame): confirm it on screen. */
       changed(v) { badge(v); },
+      sync,
     };
   }
 
