@@ -708,7 +708,7 @@ option { background: var(--bg-2); color: var(--text); }
   background: var(--c);
 }
 .band-chip.active { color: var(--text); border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 20%, transparent); }
-/* the selected band's × removes it (only while more than one band is left) */
+/* every band but the first has a × that removes it */
 .band-x {
   width: 18px; height: 18px; margin: 0 -4px 0 -1px;
   display: grid; place-items: center;
