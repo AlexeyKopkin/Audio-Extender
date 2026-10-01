@@ -37,7 +37,8 @@ Chrome and Edge.
 - A paused tab no longer keeps the computer awake: audio processing goes to sleep after 10 seconds without playback and wakes up with the next play
 - Fixed: right after the browser starts (restored tabs) a page could wait up to two seconds for its settings; speed keys pressed meanwhile went to the site. A page now reads its settings at once
 - Fixed (Firefox): a chosen output device could show as "…" when its name was not saved; the name is now always kept (or looked up once the device plays), and a device without a name shows as "Chosen device"
-- EQ presets apply to the equalizer that is open: on the 10- or 31-band EQ a preset sets its sliders to follow the preset's curve, instead of switching to the parametric EQ; a preset saved on another kind of EQ is matched the same way. Only the open equalizer processes the sound, as before
+- Equalizer: one switch per kind (Parametric, 10 bands, 31 bands). Switching one on switches the others off, and all can be off; the tab of the equalizer that is on has a dot, so it is always clear which one processes the sound. The tabs only show an equalizer, they don't switch it on
+- EQ presets apply to the equalizer that is on: on the 10- or 31-band EQ a preset sets its sliders to follow the preset's curve (a preset saved on another kind is matched the same way). While all are off, the preset menu is disabled
 - Parametric EQ: every band except the first has a × to remove it (Delete / Backspace on a band works too), instead of a trash button that was easy to miss
 - The browser's own right-click menu (Save page as, View source…) no longer opens in the popup; text fields keep it for copy and paste
 - Much lower CPU use while the popup or the sidebar / side panel is open: about one CPU core before, close to nothing now when no sound plays. The background and the status dot no longer animate, the cards no longer blur what is behind them live, and the meters redraw only while there is sound

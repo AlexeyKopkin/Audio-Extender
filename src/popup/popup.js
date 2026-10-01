@@ -250,7 +250,7 @@
     pw.setAttribute('aria-pressed', audio.enabled);
     // switched off by the user; a site outside the allow list is "na" instead, so its notice stays clickable
     $('#app').classList.toggle('off', !audio.enabled && AE.siteAllowed(data.app, host));
-    $('#eq-graph').classList.toggle('bypass', !audio.eq.on);
+    eq.renderState();
     renderSiteChip();
   }
 
@@ -1126,6 +1126,10 @@
     const box = $('#eq-graph'), svg = $('#eq-svg'), cv = $('#eq-canvas');
     const ctx = cv.getContext('2d');
     const E = () => audio.eq;
+    /* Three EQ kinds, one of them (or none) switched on: audio.eq.on + audio.eq.mode, as stored.
+       The tabs only choose which one is shown and edited (`view`); each one's switch turns that kind on
+       (the others off) or off. Presets apply to the one that is on. */
+    let view = 'param';
 
     const LOGR = Math.log(FMAX / FMIN);
     const f2x = (f) => (W * Math.log(f / FMIN)) / LOGR;
@@ -1164,7 +1168,7 @@
       const q = e.mode === 'g10' ? 1.41 : 4.32;
       return freqs.map((f, i) => ({ type: 'peaking', f, g: (e[e.mode] || [])[i] || 0, q }));
     }
-    const activeFilters = () => filtersOf(E());
+    const activeFilters = () => filtersOf({ ...E(), mode: view });
 
     /* Presets apply to the EQ that is open. A curve made for another kind (the built-in ones are parametric bands)
        is matched by the open one: its sliders — or, for the parametric EQ, 8 peaks — get the gains that follow the
@@ -1248,7 +1252,7 @@
       if (audio.autoeq.id) {
         s += `<path class="ae-curve" d="${curvePath(audio.autoeq.filters, audio.autoeq.preamp)}"/>`;
       }
-      if (e.mode === 'param' && e.bands[sel]) {
+      if (view === 'param' && e.bands[sel]) {
         const col = COLORS[sel % COLORS.length];
         const d = curvePath([e.bands[sel]]);
         s += `<path class="area band-area" d="${d}L${W} ${H / 2}L0 ${H / 2}Z" style="fill:${col};fill-opacity:.12;stroke:${col};stroke-opacity:.6"/>`;
@@ -1257,7 +1261,7 @@
       s += `<path class="area" d="${d}L${W} ${H}L0 ${H}Z" fill="url(#eqFill)"/>`;
       s += `<path class="curve" d="${d}"/>`;
 
-      if (e.mode === 'param') {
+      if (view === 'param') {
         e.bands.forEach((b, i) => {
           const x = f2x(b.f), y = g2y(NO_GAIN.has(b.type) ? 0 : b.g), col = COLORS[i % COLORS.length];
           const on = i === sel;
@@ -1273,18 +1277,20 @@
           s += `<text class="node-tip" x="${x}" y="${y < 40 ? y + 30 : y - 18}">${label}</text>`;
         }
       } else {
-        const freqs = e.mode === 'g10' ? AE.G10 : AE.G31;
+        const freqs = view === 'g10' ? AE.G10 : AE.G31;
         freqs.forEach((f, i) => {
-          s += `<circle cx="${f2x(Math.min(f, 19500))}" cy="${g2y(e[e.mode][i])}" r="${e.mode === 'g10' ? 3.5 : 2.2}" fill="#fff" opacity=".85"/>`;
+          s += `<circle cx="${f2x(Math.min(f, 19500))}" cy="${g2y(e[view][i])}" r="${view === 'g10' ? 3.5 : 2.2}" fill="#fff" opacity=".85"/>`;
         });
       }
       setSVG(svg, s);
     }
 
     function edited() {
-      E().preset = 'custom';
-      presetSel.value = 'custom';
-      $('#preset-del-btn').classList.add('hidden');
+      if (view === E().mode) { // the preset belongs to the EQ that is on
+        E().preset = 'custom';
+        presetSel.value = 'custom';
+        $('#preset-del-btn').classList.add('hidden');
+      }
       commit();
     }
 
@@ -1320,7 +1326,7 @@
     });
     box.addEventListener('wheel', (e) => {
       const b = E().bands[sel];
-      if (E().mode !== 'param' || !b || NO_Q.has(b.type)) return;
+      if (view !== 'param' || !b || NO_Q.has(b.type)) return;
       e.preventDefault();
       b.q = clamp(+(b.q * (e.deltaY < 0 ? 1.1 : 1 / 1.1)).toFixed(2), 0.1, 12);
       syncEditor(); render(); edited();
@@ -1409,6 +1415,7 @@
     }
     presetSel.addEventListener('change', () => {
       const v = presetSel.value, e = E();
+      if (!e.on) return; // all EQs off: nothing to apply to (the menu is disabled then)
       if (BUILTIN.includes(v)) {
         applyCurve(e, { mode: 'param', bands: PRESETS[v] });
       } else if (v.startsWith('user:')) {
@@ -1417,7 +1424,7 @@
       }
       e.preset = v;
       sel = 0;
-      setMode(e.mode, true);
+      setView(e.mode); // show the EQ the preset went to
       $('#preset-del-btn').classList.toggle('hidden', !v.startsWith('user:'));
       commit();
     });
@@ -1430,9 +1437,9 @@
       const e = E();
       const name = $('#preset-name').value.trim() || `${tr('eq.preset')} ${data.presets.length + 1}`;
       const id = Date.now().toString(36);
-      data.presets = [...data.presets, { id, name, eq: { mode: e.mode, bands: e.bands, g10: e.g10, g31: e.g31, preamp: e.preamp } }];
+      data.presets = [...data.presets, { id, name, eq: { mode: view, bands: e.bands, g10: e.g10, g31: e.g31, preamp: e.preamp } }];
       API.persist({ presets: data.presets });
-      e.preset = 'user:' + id;
+      if (view === e.mode) e.preset = 'user:' + id;
       $('#preset-name').value = '';
       $('#preset-save-row').classList.add('hidden');
       renderPresets();
@@ -1453,11 +1460,11 @@
     const GEQ_MAX = 12;
     function buildGraphic() {
       const e = E();
-      const freqs = e.mode === 'g10' ? AE.G10 : AE.G31;
+      const freqs = view === 'g10' ? AE.G10 : AE.G31;
       const wrap = $('#geq');
-      wrap.classList.toggle('dense', e.mode === 'g31');
+      wrap.classList.toggle('dense', view === 'g31');
       setHTML(wrap, freqs.map((f, i) => {
-        const showLabel = e.mode === 'g10' || i % 3 === 0;
+        const showLabel = view === 'g10' || i % 3 === 0;
         const lbl = f >= 1000 ? (f / 1000) + 'k' : Math.round(f);
         return `<div class="vs" data-i="${i}">
           <span class="vs-val"></span>
@@ -1465,7 +1472,7 @@
           <span class="vs-label">${showLabel ? lbl : ''}</span>
         </div>`;
       }).join(''));
-      $$('.vs', wrap).forEach((el, i) => paintVs(el, e[e.mode][i]));
+      $$('.vs', wrap).forEach((el, i) => paintVs(el, e[view][i]));
     }
     function paintVs(el, v) {
       const pos = 50 - (v / GEQ_MAX) * 50;
@@ -1486,40 +1493,54 @@
     $('#geq').addEventListener('pointermove', (e) => { if (vsDrag) moveVs(e); });
     $('#geq').addEventListener('pointerup', () => { vsDrag = null; });
     onDoubleTap($('#geq'), '.vs', (el) => {
-      E()[E().mode][+el.dataset.i] = 0;
+      E()[view][+el.dataset.i] = 0;
       paintVs(el, 0); render(); edited();
     });
     function moveVs(e) {
       const rect = vsDrag.querySelector('.vs-track').getBoundingClientRect();
       const t = clamp((e.clientY - rect.top) / rect.height, 0, 1);
       const v = Math.round((1 - 2 * t) * GEQ_MAX * 2) / 2;
-      E()[E().mode][+vsDrag.dataset.i] = v;
+      E()[view][+vsDrag.dataset.i] = v;
       paintVs(vsDrag, v);
       render();
       edited();
     }
 
-    /* ----- mode switch ----- */
-    function setMode(m, silent) {
-      E().mode = m;
+    /* ----- which EQ is shown, which one is on ----- */
+    function setView(m) {
+      view = m;
+      ui.set('eqView', m);
       $$('#eq-mode button').forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
       $('#eq-param').classList.toggle('hidden', m !== 'param');
       $('#eq-graphic').classList.toggle('hidden', m === 'param');
       updateHint();
       if (m !== 'param') buildGraphic();
       else syncEditor();
+      renderState();
       render();
-      if (!silent) commit();
     }
-    function updateHint() {
-      $('#graph-hint').textContent = tr((E().mode === 'param' ? 'eq.hintParam' : 'eq.hintGraphic') + (TOUCH ? 'Touch' : ''));
+    /** The switch shows whether the EQ on screen is the one that is on; the tab of that one has a dot. */
+    function renderState() {
+      const e = E(), on = e.on && e.mode === view;
+      $('#eq-on').checked = on;
+      $$('#eq-mode button').forEach((b) => b.classList.toggle('running', e.on && b.dataset.mode === e.mode));
+      $('#eq-graph').classList.toggle('bypass', !on);
+      presetSel.disabled = !e.on;
+      presetSel.title = e.on ? '' : tr('eq.allOff');
     }
-    $$('#eq-mode button').forEach((b) => b.addEventListener('click', () => {
-      if (b.dataset.mode === E().mode) return;
-      E().preset = 'custom'; // the chosen preset was applied to the other EQ
-      setMode(b.dataset.mode);
+    $('#eq-on').addEventListener('change', (ev) => {
+      const e = E();
+      if (ev.target.checked) { if (e.mode !== view) e.preset = 'custom'; e.on = true; e.mode = view; } // this one on, the others off
+      else if (e.mode === view) e.on = false;                // all off
       renderPresets();
-    }));
+      renderState();
+      render();
+      commit();
+    });
+    function updateHint() {
+      $('#graph-hint').textContent = tr((view === 'param' ? 'eq.hintParam' : 'eq.hintGraphic') + (TOUCH ? 'Touch' : ''));
+    }
+    $$('#eq-mode button').forEach((b) => b.addEventListener('click', () => setView(b.dataset.mode)));
 
     /* ----- spectrum ----- */
     const BARS = 72;
@@ -1546,10 +1567,10 @@
 
     function refresh() {
       renderPresets();
-      setMode(E().mode, true);
+      setView(E().on ? E().mode : ui.get('eqView', E().mode)); // open on the EQ that is on
     }
 
-    return { render, refresh, syncEditor, updateHint, drawSpectrum, get visible() { return !!box.offsetParent; } };
+    return { render, refresh, renderState, syncEditor, updateHint, drawSpectrum, get visible() { return !!box.offsetParent; } };
   })();
 
   function hexA(color, a) {
