@@ -542,6 +542,8 @@ select {
 }
 select:hover, select:focus { border-color: var(--border-strong); outline: none; }
 option { background: var(--bg-2); color: var(--text); }
+/* group headings in a list ("Built-in", "My presets"): the browser would draw them on its own light background */
+optgroup { background: var(--bg-2); color: var(--text-dim); font-style: normal; font-weight: 700; }
 
 /* ================= BOOSTER ================= */
 .gauge-card { padding-top: 10px; }
