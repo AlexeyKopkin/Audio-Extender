@@ -19,6 +19,7 @@
   let tabGain = null;   // this tab's own volume from the Mixer (null: the site's), see AE.withTabGain
   let base = null;      // the site's settings before the tab's own volume
   let bypass = false;   // the whole tab is processed elsewhere (deep mode): the page engine must not touch the sound
+  let greeted = false;  // the background answered 'hello' (duck, deep mode, the tab's own volume are known)
   let lastReply = null;
   let lastStatus = { sources: 0, blocked: 0, playing: 0, active: false };
   let data = null;
@@ -40,7 +41,9 @@
 
   function pushSettings() {
     if (!settings) return;
-    if (bypass) toPage({ type: 'settings', settings, duck: 1, active: false });
+    // Until the background has answered, the engine gets the settings (speed applies, keys work) but doesn't
+    // process the sound yet: the tab may be in deep mode, and processing it twice would make it louder.
+    if (bypass || !greeted) toPage({ type: 'settings', settings, duck: 1, active: false });
     else toPage({ type: 'settings', settings, duck, active: AE.needsProcessing(settings) || duck < 1 });
   }
 
@@ -256,11 +259,32 @@
     }
   });
 
-  browser.runtime.sendMessage({ type: 'hello' }).then((info) => {
-    host = info && info.host;
-    if (info && typeof info.duck === 'number') duck = info.duck;
-    if (info && typeof info.tabGain === 'number') tabGain = info.tabGain;
-    if (info && info.bypass) bypass = true;
-    refresh();
-  }).catch(() => { /* extension reloaded */ });
+  /* Settings come from storage directly, so the page is ready at once — also while the background is still
+     starting (browser start, restored tabs: that can take seconds, and speed keys pressed meanwhile were lost).
+     The site is the tab's top page: known here in the top frame and in frames that can see it (Firefox has no
+     location.ancestorOrigins); other frames wait for 'hello', which also brings duck, deep mode and the
+     tab's own volume. */
+  function topHost() {
+    if (window === window.top) return AE.hostOf(location.href);
+    try { return AE.hostOf(window.top.location.href); } catch { /* another site's frame */ }
+    const anc = location.ancestorOrigins;
+    return anc && anc.length ? AE.hostOf(anc[anc.length - 1]) : null;
+  }
+  host = topHost();
+  refresh();
+
+  function hello(attempt = 0) {
+    browser.runtime.sendMessage({ type: 'hello' }).then((info) => {
+      host = info ? info.host : host;
+      if (info && typeof info.duck === 'number') duck = info.duck;
+      if (info && typeof info.tabGain === 'number') tabGain = info.tabGain;
+      if (info && info.bypass) bypass = true;
+      greeted = true;
+      refresh();
+    }).catch(() => {
+      // the background is restarting: ask again (a script left behind by an update stops here)
+      if (attempt < 5 && browser.runtime && browser.runtime.id) setTimeout(() => hello(attempt + 1), 500 * 2 ** attempt);
+    });
+  }
+  hello();
 })();
