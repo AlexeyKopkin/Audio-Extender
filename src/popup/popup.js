@@ -109,6 +109,23 @@
   addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
 
+  /* The tabs' own volumes (Mixer): { tabId: { host, gain } }. A tab with one plays at that volume instead of
+     the site's; the Booster shows and edits it, with a note and a way back to the site's volume. */
+  let tabGains = {};
+  const ownGain = (t) => {
+    const e = t && tabGains[t.id];
+    return e && e.host === AE.hostOf(t.url) && typeof e.gain === 'number' ? Math.min(e.gain, AE.gainCap(data.app)) : null;
+  };
+  /** What the current tab's Booster shows: its own volume, or the site's. */
+  const shownGain = () => { const own = ownGain(tab); return own === null ? audio.gain : own; };
+  function setTabGain(t, gain) {
+    if (typeof gain === 'number') tabGains = { ...tabGains, [t.id]: { host: AE.hostOf(t.url), gain } };
+    else { tabGains = { ...tabGains }; delete tabGains[t.id]; }
+    lastTabGainEdit = Date.now();
+    API.setTabGain(t.id, gain).catch(() => {});
+  }
+  let lastTabGainEdit = 0;
+
   /** Called after every edit of `audio` for the current site. */
   function commit() {
     lastEdit = Date.now();
@@ -216,6 +233,7 @@
       if (sw) card.classList.toggle('on', sw.checked);
     });
     updateGauge();
+    renderTabGainNote();
     renderUnheard();
     const matched = !!data.app.matchLoudness;
     $('#norm-card').classList.toggle('locked', matched);
@@ -616,6 +634,7 @@
     }
     lastEdit = Date.now();
     audio = AE.effective(data, host);
+    if (tab && ownGain(tab) !== null) setTabGain(tab, null);
     if (link) link.post({ type: 'live', settings: audio });
     renderAll();
   });
@@ -932,7 +951,8 @@
   }
 
   function updateGauge() {
-    const v = audio.gain;
+    const v = shownGain();
+    if (document.activeElement !== boost) { boost.value = v; paintRange(boost); }
     const dash = `${(v / G.max) * 100} 100`;
     $('#gauge-arc').style.strokeDasharray = dash;
     $('#gauge-glow').style.strokeDasharray = dash;
@@ -948,22 +968,43 @@
   /** `exact`: typed values and Shift+wheel keep 1% steps; everything else snaps to 5%. */
   function setGain(v, exact) {
     if (gainLocked()) return;
-    audio.gain = clamp(exact ? Math.round(v) : Math.round(v / 5) * 5, 0, G.max);
-    boost.value = audio.gain;
+    const g = clamp(exact ? Math.round(v) : Math.round(v / 5) * 5, 0, G.max);
+    if (ownGain(tab) !== null) {
+      setTabGain(tab, g);
+      updateGauge();
+      if (currentPanel === 'mixer') refreshMixer();
+      return;
+    }
+    audio.gain = g;
+    boost.value = g;
     paintRange(boost);
     commit();
   }
+  boost.addEventListener('input', () => setGain(+boost.value, true));
+
+  /** Booster of a tab with its own volume: say so, and offer the site's volume back. */
+  function renderTabGainNote() {
+    const own = ownGain(tab);
+    $('#tab-gain-note').classList.toggle('hidden', own === null);
+    if (own !== null) $('#tab-gain-text').textContent = tr('boost.tabOnly', { s: audio.gain });
+  }
+  $('#tab-gain-reset').addEventListener('click', () => {
+    if (!tab) return;
+    setTabGain(tab, null);
+    renderDerived();
+    if (currentPanel === 'mixer') refreshMixer();
+  });
   $$('#boost-presets .chip').forEach((c) => c.addEventListener('click', () => setGain(+c.dataset.v)));
-  $('#boost-dec').addEventListener('click', () => setGain(audio.gain - 10));
-  $('#boost-inc').addEventListener('click', () => setGain(audio.gain + 10));
+  $('#boost-dec').addEventListener('click', () => setGain(shownGain() - 10));
+  $('#boost-inc').addEventListener('click', () => setGain(shownGain() + 10));
   $('.gauge').addEventListener('wheel', (e) => {
     if (gainLocked()) return;
     e.preventDefault();
     const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
     if (!d) return;
-    setGain(audio.gain + Math.sign(-d) * (e.shiftKey ? 1 : 5), e.shiftKey);
+    setGain(shownGain() + Math.sign(-d) * (e.shiftKey ? 1 : 5), e.shiftKey);
   }, { passive: false });
-  typeable($('#gauge-value'), { get: () => audio.gain, set: (v) => setGain(v, true), min: () => 0, max: () => G.max });
+  typeable($('#gauge-value'), { get: () => shownGain(), set: (v) => setGain(v, true), min: () => 0, max: () => G.max });
 
   // meters: dB → position matching the −48/−24/−12/−6/0 scale labels
   const MPTS = [[-48, 0], [-24, 25], [-12, 50], [-6, 75], [0, 100]];
@@ -1567,14 +1608,16 @@
       setHTML(list, mixTabs.map((t) => {
         const h = AE.hostOf(t.url);
         const s = t.id === current ? audio : AE.effective(data, h);
+        const own = s.enabled ? ownGain(t) : null;
+        const g = own === null ? s.gain : own;
         const muted = t.mutedInfo && t.mutedInfo.muted;
-        const meta = [h, s.enabled ? s.gain + '%' : tr('app.processingOff'), muted ? tr('mixer.muted') : ''].filter(Boolean).join(' · ');
+        const meta = [h, s.enabled ? g + '%' : tr('app.processingOff'), own !== null ? tr('mixer.tabOnly') : '', muted ? tr('mixer.muted') : ''].filter(Boolean).join(' · ');
         return `<div class="mix-item${t.id === current ? ' current' : ''}${muted ? ' muted' : ''}" data-id="${t.id}" data-host="${esc(h)}">
           ${favicon(t, h)}
           <div class="mix-body">
             <div class="mix-title"><span>${esc(t.title || h)}</span>${t.id === current ? `<em class="tag">${esc(tr('mixer.thisTab'))}</em>` : ''}</div>
             <div class="mix-meta">${esc(meta)}</div>
-            <div class="mix-controls"><input type="range" min="0" max="${AE.gainCap(data.app)}" step="5" value="${s.gain}"><output>${s.gain}%</output></div>
+            <div class="mix-controls"><input type="range" min="0" max="${AE.gainCap(data.app)}" step="5" value="${g}"><output>${g}%</output></div>
             <div class="mini-meter"><i></i></div>
             ${OUT_MODE ? `<select class="mix-dev" aria-label="${esc(tr('dev.title'))}" title="${esc(outHint(h, t.id === current) || tr('dev.title'))}">${optionsHTML(h)}</select>` : ''}
           </div>
@@ -1607,16 +1650,22 @@
     mixTimer = setTimeout(() => { if (currentPanel === 'mixer') refreshMixer(); }, 150);
   });
 
+  // a Mixer slider is that tab's own volume: other tabs of the same site keep theirs
   $('#mix-list').addEventListener('input', (e) => {
     if (e.target.type !== 'range') return;
     const item = e.target.closest('.mix-item');
     const h = item.dataset.host, v = +e.target.value;
+    const t = mixTabs.find((x) => x.id === +item.dataset.id);
+    if (!t) return;
     paintRange(e.target);
     e.target.nextElementSibling.textContent = v + '%';
-    const s = +item.dataset.id === (tab && tab.id) ? audio : AE.effective(data, h);
-    s.gain = v;
-    s.enabled = true;
-    commitHost(h, s);
+    const isCurrent = tab && t.id === tab.id;
+    const s = isCurrent ? audio : AE.effective(data, h);
+    if (!s.enabled) { s.enabled = true; commitHost(h, s); } // switched off: the slider switches it on, as before
+    setTabGain(t, v);
+    const meta = item.querySelector('.mix-meta');
+    meta.textContent = [h, v + '%', tr('mixer.tabOnly'), t.mutedInfo && t.mutedInfo.muted ? tr('mixer.muted') : ''].filter(Boolean).join(' · ');
+    if (isCurrent) renderDerived();
   });
   $('#mix-list').addEventListener('click', async (e) => {
     const item = e.target.closest('.mix-item');
@@ -1826,8 +1875,16 @@
     if (AE.KEYS.some((k) => k in changes)) reloadData(false);
   });
 
+  API.onTabGainsChanged((all) => {
+    if (Date.now() - lastTabGainEdit < 1000) return; // our own write echoing back
+    tabGains = all;
+    renderDerived();
+    if (currentPanel === 'mixer') refreshMixer();
+  });
+
   async function switchTab(t) {
     tab = t;
+    try { tabGains = await API.tabGains(); } catch { tabGains = {}; }
     host = t ? AE.hostOf(t.url) : null;
     kind = API.context === 'tab' ? 'internal' : t ? API.pageKind(t.url) : 'internal';
     audio = AE.effective(data, host);

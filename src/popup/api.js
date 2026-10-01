@@ -76,6 +76,12 @@
     persist(patch) { return browser.runtime.sendMessage({ type: 'persist', patch }).catch(() => browser.storage.local.set(patch)); },
     save(obj) { return browser.storage.local.set(obj); },
     async getRaw(key) { return (await browser.storage.local.get(key))[key]; },
+    /** The tabs' own volumes (Mixer): { tabId: { host, gain } }, kept by the background in storage.session. */
+    async tabGains() { return (await browser.storage.session.get('tabGain')).tabGain || {}; },
+    setTabGain(tabId, gain) { return browser.runtime.sendMessage({ type: 'tab-gain', tabId, gain }); },
+    onTabGainsChanged(cb) {
+      browser.storage.onChanged.addListener((changes, area) => { if (area === 'session' && changes.tabGain) cb(changes.tabGain.newValue || {}); });
+    },
     clearAll() { return browser.storage.local.clear(); },
     onChanged(cb) {
       browser.storage.onChanged.addListener((changes, area) => { if (area === 'local') cb(changes); });

@@ -136,9 +136,10 @@
           <button class="round-btn" id="boost-inc" title="+10%">+</button>
         </div>
 
-        <input type="range" id="boost" min="0" max="600" step="5" value="100" data-bind="gain" aria-label="Gain">
+        <input type="range" id="boost" min="0" max="600" step="5" value="100" aria-label="Gain">
         <div class="range-scale" id="boost-scale"><span>0%</span><span>150%</span><span>300%</span><span>450%</span><span>600%</span></div>
 
+        <p class="tab-gain-note hidden" id="tab-gain-note"><span id="tab-gain-text"></span> <button class="link-btn" id="tab-gain-reset" data-i18n="boost.tabReset">Use the site's</button></p>
         <p class="boost-state hidden" id="boost-state"><span id="boost-state-text"></span> <button class="link-btn hidden" id="boost-state-btn" data-i18n="deep.enable">Deep mode</button></p>
 
         <div class="chips" id="boost-presets">

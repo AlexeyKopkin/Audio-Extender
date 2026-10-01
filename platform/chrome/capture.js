@@ -40,18 +40,21 @@ async function settingsFor(tabId) {
   await ready;
   const host = AE.hostOf(tab.url);
   const output = AE.outputFor(data, host);
-  return { host, settings: AE.effective(data, host), duck: await getDuck(tabId), output: output ? output.id : '' };
+  // the tab's own volume (Mixer) goes separately: the popup's live edits carry only the site's settings
+  const own = await getTabGain(tabId, host);
+  const tabGain = own === null ? null : Math.min(own, AE.gainCap(data.app));
+  return { host, settings: AE.effective(data, host), tabGain, duck: await getDuck(tabId), output: output ? output.id : '' };
 }
 
 async function captureStart(tabId) {
-  const { host, settings, duck, output } = await settingsFor(tabId);
+  const { host, settings, tabGain, duck, output } = await settingsFor(tabId);
   await setBypass(tabId, true);
   let res;
   try {
     // Chrome allows this only after the user invoked the extension on this tab (popup / shortcut).
     const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
     await ensureOffscreen();
-    res = await toOffscreen({ type: 'offscreen-start', tabId, streamId, settings, duck, output });
+    res = await toOffscreen({ type: 'offscreen-start', tabId, streamId, settings, tabGain, duck, output });
   } catch (e) {
     res = { ok: false, error: String((e && e.message) || e) };
   }
@@ -76,9 +79,9 @@ async function pushToCaptures(onlyTabId) {
     const tabId = +id;
     if (onlyTabId !== undefined && tabId !== onlyTabId) continue;
     try {
-      const { host, settings, duck, output } = await settingsFor(tabId);
+      const { host, settings, tabGain, duck, output } = await settingsFor(tabId);
       if (host !== deep[id]) await setDeepTab(tabId, host);
-      await toOffscreen({ type: 'offscreen-update', tabId, settings, duck, output });
+      await toOffscreen({ type: 'offscreen-update', tabId, settings, tabGain, duck, output });
     } catch { /* tab gone */ }
   }
 }
@@ -95,7 +98,7 @@ chrome.tabs.onRemoved.addListener(async (tabId) => { if ((await deepTabs())[tabI
 // navigation inside a captured tab: Chrome keeps the capture; follow the new site's settings
 chrome.tabs.onUpdated.addListener(async (tabId, info) => { if (info.url && (await deepTabs())[tabId] !== undefined) pushToCaptures(tabId); });
 chrome.storage.onChanged.addListener((changes, area) => {
-  if ((area === 'local' && AE.KEYS.some((k) => k in changes)) || (area === 'session' && changes.duck)) pushToCaptures();
+  if ((area === 'local' && AE.KEYS.some((k) => k in changes)) || (area === 'session' && (changes.duck || changes.tabGain))) pushToCaptures();
 });
 
 // The browser was restarted or the extension updated: captures are gone, forget them.
