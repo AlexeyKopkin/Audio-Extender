@@ -1157,12 +1157,56 @@
       return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di) + 1e-12);
     }
 
-    function activeFilters() {
-      const e = E();
+    /** The filters an EQ setting runs ({ mode, bands, g10, g31 }): the bands, or the graphic EQ's sliders as peaks. */
+    function filtersOf(e) {
       if (e.mode === 'param') return e.bands;
       const freqs = e.mode === 'g10' ? AE.G10 : AE.G31;
       const q = e.mode === 'g10' ? 1.41 : 4.32;
-      return freqs.map((f, i) => ({ type: 'peaking', f, g: e[e.mode][i] || 0, q }));
+      return freqs.map((f, i) => ({ type: 'peaking', f, g: (e[e.mode] || [])[i] || 0, q }));
+    }
+    const activeFilters = () => filtersOf(E());
+
+    /* Presets apply to the EQ that is open. A curve made for another kind (the built-in ones are parametric bands)
+       is matched by the open one: its sliders — or, for the parametric EQ, 8 peaks — get the gains that follow the
+       preset's curve best over the whole range (least squares on a dense log grid; a peak's dB response is close to
+       proportional to its gain, refined a few times for the rest). */
+    const FIT_PEAKS = [40, 90, 200, 450, 1000, 2200, 5000, 11000];
+    function solve(A, y) { // small dense system, Gaussian elimination with partial pivoting
+      const n = y.length, M = A.map((row, i) => [...row, y[i]]);
+      for (let c = 0; c < n; c++) {
+        let p = c;
+        for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+        [M[c], M[p]] = [M[p], M[c]];
+        for (let r = 0; r < n; r++) {
+          if (r === c || !M[c][c]) continue;
+          const k = M[r][c] / M[c][c];
+          for (let k2 = c; k2 <= n; k2++) M[r][k2] -= k * M[c][k2];
+        }
+      }
+      return M.map((row, i) => (row[i] ? row[n] / row[i] : 0));
+    }
+    function fitCurve(mode, filters) {
+      const src = filters.map(coeffs);
+      const param = mode === 'param';
+      const freqs = param ? FIT_PEAKS : mode === 'g10' ? AE.G10 : AE.G31;
+      const q = param ? 1.2 : mode === 'g10' ? 1.41 : 4.32;
+      const lim = param ? GMAX : 12;
+      const grid = Array.from({ length: 160 }, (_, k) => FMIN * Math.pow(FMAX / FMIN, k / 159));
+      const target = grid.map((f) => clamp(src.reduce((db, c) => db + magDb(c, f), 0), -lim, lim));
+      let gains = freqs.map(() => 0);
+      for (let pass = 0; pass < 4; pass++) {
+        // linearize around the current gains: column i = dB change per dB of band i
+        const cur = grid.map((f) => freqs.reduce((db, fc, i) => db + magDb(coeffs({ type: 'peaking', f: fc, g: gains[i], q }), f), 0));
+        const B = grid.map((f) => freqs.map((fc, i) => magDb(coeffs({ type: 'peaking', f: fc, g: gains[i] + 1, q }), f) - magDb(coeffs({ type: 'peaking', f: fc, g: gains[i], q }), f)));
+        const r = grid.map((_, j) => target[j] - cur[j]);
+        const n = freqs.length, lambda = 0.05; // a little damping keeps neighbouring bands from fighting
+        const A = Array.from({ length: n }, (_, a) => Array.from({ length: n }, (_, b) => grid.reduce((sum, _, j) => sum + B[j][a] * B[j][b], 0) + (a === b ? lambda : 0)));
+        const y = Array.from({ length: n }, (_, a) => grid.reduce((sum, _, j) => sum + B[j][a] * r[j], 0));
+        const step = solve(A, y);
+        gains = gains.map((g, i) => clamp(g + step[i], -lim, lim));
+      }
+      const round = (g) => Math.round(g * (param ? 10 : 2)) / (param ? 10 : 2); // graphic sliders move in 0.5 dB steps
+      return param ? freqs.map((f, i) => ({ type: 'peaking', f, g: round(gains[i]), q })) : gains.map(round);
     }
 
     function curvePath(filters, offset = 0) {
@@ -1355,14 +1399,21 @@
       presetSel.value = [...presetSel.options].some((o) => o.value === v) ? v : 'custom';
       $('#preset-del-btn').classList.toggle('hidden', !presetSel.value.startsWith('user:'));
     }
+    /** Put a preset's curve into the EQ that is open (`src`: { mode, bands, g10, g31 }). */
+    function applyCurve(e, src) {
+      if (src.mode === e.mode) {
+        if (e.mode === 'param') e.bands = AE.clone(src.bands);
+        else e[e.mode] = AE.clone(src[e.mode]);
+      } else if (e.mode === 'param') e.bands = fitCurve('param', filtersOf(src));
+      else e[e.mode] = fitCurve(e.mode, filtersOf(src));
+    }
     presetSel.addEventListener('change', () => {
       const v = presetSel.value, e = E();
       if (BUILTIN.includes(v)) {
-        e.mode = 'param';
-        e.bands = AE.clone(PRESETS[v]);
+        applyCurve(e, { mode: 'param', bands: PRESETS[v] });
       } else if (v.startsWith('user:')) {
         const p = data.presets.find((x) => 'user:' + x.id === v);
-        if (p) Object.assign(e, AE.clone(p.eq));
+        if (p) { applyCurve(e, p.eq); if (typeof p.eq.preamp === 'number') e.preamp = p.eq.preamp; }
       }
       e.preset = v;
       sel = 0;
@@ -1463,7 +1514,12 @@
     function updateHint() {
       $('#graph-hint').textContent = tr((E().mode === 'param' ? 'eq.hintParam' : 'eq.hintGraphic') + (TOUCH ? 'Touch' : ''));
     }
-    $$('#eq-mode button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    $$('#eq-mode button').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.mode === E().mode) return;
+      E().preset = 'custom'; // the chosen preset was applied to the other EQ
+      setMode(b.dataset.mode);
+      renderPresets();
+    }));
 
     /* ----- spectrum ----- */
     const BARS = 72;
