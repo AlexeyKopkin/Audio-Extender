@@ -164,6 +164,7 @@
     reloadTab(tabId) { return browser.tabs.reload(tabId); },
     activateTab(tabId) { return browser.tabs.update(tabId, { active: true }); },
     commands() { return browser.commands.getAll(); },
+    openShortcuts() { return PLATFORM.openShortcuts(); },
     openTab(url) { return browser.tabs.create({ url }); },
     pageUrl(query) { return browser.runtime.getURL('popup/popup.html' + query); },
     version() { return browser.runtime.getManifest().version; },

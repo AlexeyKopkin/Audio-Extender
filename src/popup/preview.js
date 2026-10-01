@@ -176,6 +176,7 @@
       ];
     },
     async openTab(url) { window.open(url, '_blank', 'noopener'); },
+    async openShortcuts() { window.__shortcutsOpened = (window.__shortcutsOpened || 0) + 1; }, // demo: nothing to open
     pageUrl(query) { return 'popup.html' + query; },
     version() { return 'preview'; },
   };

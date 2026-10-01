@@ -20,6 +20,9 @@
     storeUrl: 'https://addons.mozilla.org/firefox/addon/audio-extender/',
     audibleSpeed: [0.125, 8], // outside, Firefox plays media without sound
 
+    /** Firefox's keyboard-shortcut page (about:addons can't be opened as a tab by an extension). */
+    openShortcuts() { const c = api().commands; return c && c.openShortcutSettings ? c.openShortcutSettings() : Promise.reject(new Error('unsupported')); },
+
     // Firefox does not run extensions on these sites (extensions.webextensions.restrictedDomains)
     restrictedHosts: [
       'accounts-static.cdn.mozilla.net', 'accounts.firefox.com', 'addons.cdn.mozilla.net', 'addons.mozilla.org',

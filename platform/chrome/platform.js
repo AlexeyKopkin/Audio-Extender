@@ -83,7 +83,18 @@
   global.PLATFORM = {
     id: 'chrome',
     name: B,
-    storeUrl: null, // set once the listings exist; the "Rate" button stays hidden until then
+    /* The add-on's page in the store it was installed from: the extension id is the store id there, and the
+       manifest's update_url says which store. An unpacked / self-hosted copy has no page: the "Rate" button hides. */
+    get storeUrl() {
+      const rt = global.chrome && global.chrome.runtime;
+      const update = (rt && rt.getManifest && rt.getManifest().update_url) || '';
+      if (/clients2\.google\.com/.test(update)) return 'https://chromewebstore.google.com/detail/' + rt.id;
+      if (/edge\.microsoft\.com/.test(update)) return 'https://microsoftedge.microsoft.com/addons/detail/' + rt.id;
+      return null;
+    },
+
+    /** The browser's keyboard-shortcut page ({scheme}extensions/shortcuts can't be a plain link). */
+    openShortcuts() { return global.chrome.tabs.create({ url: SCHEME + 'extensions/shortcuts' }); },
 
     // extensions can't run on the browsers' own stores
     restrictedHosts: ['chromewebstore.google.com', 'chrome.google.com', 'microsoftedge.microsoft.com'],
