@@ -708,12 +708,21 @@ option { background: var(--bg-2); color: var(--text); }
   background: var(--c);
 }
 .band-chip.active { color: var(--text); border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 20%, transparent); }
+/* the selected band's × removes it (only while more than one band is left) */
+.band-x {
+  width: 18px; height: 18px; margin: 0 -4px 0 -1px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: 14px; line-height: 1; font-weight: 600;
+  color: var(--text-mute);
+  cursor: pointer;
+}
+.band-x:hover { color: #fff; background: var(--danger, #ef4444); }
 .band-chip.add { padding: 4px 10px; color: var(--text-mute); border-style: dashed; }
 .band-chip.add .ic { width: 12px; height: 12px; }
 
 .band-editor { display: flex; align-items: flex-end; gap: 8px; }
 .band-editor .field { flex: 1; }
-.band-editor .icon-btn { height: 34px; }
 .param-grid .row-label { margin-top: 8px; }
 .param.disabled { opacity: .35; pointer-events: none; }
 
