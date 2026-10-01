@@ -854,7 +854,7 @@
     const saved = AE.outputFor(data, h);
     const opts = [{ v: '', t: tr('dev.default') }];
     if (OUT_MODE === 'deep' && outDevices.granted) opts.push(...outDevices.devices.map((d) => ({ v: d.id, t: d.label || d.id.slice(0, 8) })));
-    if (saved && !opts.some((o) => o.v === saved.id)) opts.push({ v: saved.id, t: saved.label || '…' });
+    if (saved && !opts.some((o) => o.v === saved.id)) opts.push({ v: saved.id, t: saved.label || tr('dev.chosen') });
     if (OUT_MODE === 'deep' && !outDevices.granted) opts.push({ v: '#show', t: tr('dev.show') });
     if (OUT_MODE === 'page') opts.push({ v: '#choose', t: tr('dev.choose') });
     const cur = saved ? saved.id : '';

@@ -100,7 +100,7 @@
     function refresh() {
       if (!supported) return;
       const w = AE.outputFor(data, host);
-      if ((w && w.id) === (want && want.id)) { want = w; return; }
+      if ((w && w.id) === (want && want.id)) { want = w; fillLabel(); return; }
       want = w;
       sinkToPage('');
       set(want ? 'wait' : '');
@@ -125,6 +125,7 @@
         const d = await md.selectAudioOutput({ deviceId: want.id });
         if (d.deviceId !== want.id) await save(d); // another device was picked in Firefox's dialog
         use(d.deviceId);
+        fillLabel();
       } catch {
         set('failed');
       }
@@ -132,10 +133,29 @@
 
     function use(id) { sinkToPage(id); set('on'); }
 
+    /** The device's name, as this document sees it once the device was selected here ('' if not). */
+    async function labelOf(id) {
+      try { return ((await md.enumerateDevices()).find((x) => x.kind === 'audiooutput' && x.deviceId === id) || {}).label || ''; } catch { return ''; }
+    }
+
+    /** Remember the device for the site. Only the top frame writes it (frames just use it), and never without
+     *  a name: a silent re-select can return an empty label — then the name is looked up or the old one kept. */
     async function save(d) {
+      if (!isTop) return;
+      const label = d.label || (want && want.id === d.deviceId && want.label) || await labelOf(d.deviceId);
       const cur = (await browser.storage.local.get('outputs')).outputs || {};
-      want = { id: d.deviceId, label: d.label };
+      want = { id: d.deviceId, label };
       await browser.storage.local.set({ outputs: { ...cur, [host]: want } });
+    }
+
+    /** A device remembered without a name (older builds, or an empty label from Firefox): fill it in once it plays here. */
+    let filling = false;
+    async function fillLabel() {
+      if (!isTop || filling || !want || want.label || state !== 'on') return;
+      filling = true;
+      const label = await labelOf(want.id);
+      if (label && want && !want.label) await save({ deviceId: want.id, label });
+      filling = false;
     }
 
     // first choice: Firefox's own device picker, opened by a click on our chip
