@@ -36,6 +36,8 @@ Chrome and Edge.
 - Maximum volume (Settings): 150 / 200 / 300 / 400 / 600%. Nothing plays louder than that — not the slider, the Mixer, the shortcut, or a site saved or imported with a higher level
 - A paused tab no longer keeps the computer awake: audio processing goes to sleep after 10 seconds without playback and wakes up with the next play
 - Fixed: right after the browser starts (restored tabs) a page could wait up to two seconds for its settings; speed keys pressed meanwhile went to the site. A page now reads its settings at once
+- Parametric EQ: the selected band shows a × to remove it (Delete / Backspace works too), instead of a trash button that was easy to miss
+- The browser's own right-click menu (Save page as, View source…) no longer opens in the popup; text fields keep it for copy and paste
 - Much lower CPU use while the popup or the sidebar / side panel is open: about one CPU core before, close to nothing now when no sound plays. The background and the status dot no longer animate, the cards no longer blur what is behind them live, and the meters redraw only while there is sound
 
 ## [0.2.1] — 2026-09-29

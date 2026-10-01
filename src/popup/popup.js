@@ -126,6 +126,12 @@
   }
   let lastTabGainEdit = 0;
 
+  // The browser's context menu (Save page as, View source…) is no use here; text fields keep it for copy / paste.
+  document.addEventListener('contextmenu', (e) => {
+    const field = e.target.closest && e.target.closest('textarea, [contenteditable], input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=file])');
+    if (!field && !String(getSelection())) e.preventDefault();
+  });
+
   /** Called after every edit of `audio` for the current site. */
   function commit() {
     lastEdit = Date.now();
@@ -1283,8 +1289,10 @@
 
     function buildChips() {
       const bands = E().bands;
+      const del = esc(tr('eq.deleteBand'));
       setHTML($('#band-chips'), bands.map((b, i) =>
-        `<button class="band-chip${i === sel ? ' active' : ''}" data-i="${i}" style="--c:${COLORS[i % COLORS.length]}"><i>${i + 1}</i>${fmt.hz(b.f)}</button>`
+        `<button class="band-chip${i === sel ? ' active' : ''}" data-i="${i}" style="--c:${COLORS[i % COLORS.length]}"><i>${i + 1}</i>${fmt.hz(b.f)}` +
+        (i === sel && bands.length > 1 ? `<span class="band-x" title="${del}" aria-label="${del}">×</span>` : '') + '</button>'
       ).join('') + (bands.length < MAX_BANDS ? `<button class="band-chip add" id="band-add"><svg class="ic"><use href="#i-plus"/></svg>${esc(tr('eq.addBand'))}</button>` : ''));
     }
     $('#band-chips').addEventListener('click', (e) => {
@@ -1294,16 +1302,26 @@
         E().bands.push({ type: 'peaking', f: 1000, g: 0, q: 1 });
         sel = E().bands.length - 1;
         edited();
-      } else sel = +chip.dataset.i;
+      } else if (e.target.closest('.band-x')) { deleteBand(+chip.dataset.i); return; }
+      else sel = +chip.dataset.i;
       syncEditor(); render();
     });
-    $('#band-del').addEventListener('click', () => {
-      const bands = E().bands;
-      if (bands.length <= 1) return;
-      bands.splice(sel, 1);
-      sel = Math.min(sel, bands.length - 1);
-      syncEditor(); render(); edited();
+    // keyboard: Delete / Backspace on a focused band removes it
+    $('#band-chips').addEventListener('keydown', (e) => {
+      const chip = e.target.closest('.band-chip');
+      if (!chip || chip.id === 'band-add' || (e.key !== 'Delete' && e.key !== 'Backspace')) return;
+      e.preventDefault();
+      deleteBand(+chip.dataset.i);
+      const next = $('#band-chips .band-chip.active');
+      if (next) next.focus();
     });
+    function deleteBand(i) {
+      const bands = E().bands;
+      if (bands.length <= 1 || !bands[i]) return;
+      bands.splice(i, 1);
+      sel = Math.min(i, bands.length - 1);
+      syncEditor(); render(); edited();
+    }
 
     function syncEditor() {
       const bands = E().bands;
