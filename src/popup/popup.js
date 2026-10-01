@@ -943,8 +943,11 @@
     $('#gauge-db').textContent = v === 0 ? '−∞ dB' : fmt.db(20 * Math.log10(v / 100));
     $$('#boost-presets .chip').forEach((c) => c.classList.toggle('active', +c.dataset.v === v));
   }
+  /** The Booster panel is locked: nothing to change on this page, or the sound is switched off. */
+  const gainLocked = () => $('#app').classList.contains('na') || $('#app').classList.contains('off');
   /** `exact`: typed values and Shift+wheel keep 1% steps; everything else snaps to 5%. */
   function setGain(v, exact) {
+    if (gainLocked()) return;
     audio.gain = clamp(exact ? Math.round(v) : Math.round(v / 5) * 5, 0, G.max);
     boost.value = audio.gain;
     paintRange(boost);
@@ -954,6 +957,7 @@
   $('#boost-dec').addEventListener('click', () => setGain(audio.gain - 10));
   $('#boost-inc').addEventListener('click', () => setGain(audio.gain + 10));
   $('.gauge').addEventListener('wheel', (e) => {
+    if (gainLocked()) return;
     e.preventDefault();
     const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
     if (!d) return;
@@ -975,27 +979,30 @@
     return 100;
   }
   const meter = { l: 0, r: 0, hold: -Infinity, holdT: 0, gr: 0 };
+  /** Meter writes only touch the page when the value changed: an idle meter costs nothing. */
+  const put = (el, prop, v) => { if (el.dataset.put !== v) { el.dataset.put = v; prop(el, v); } };
+  const styleProp = (name) => (el, v) => el.style.setProperty(name, v);
+  const textProp = (el, v) => { el.textContent = v; };
   function renderMeters(agg, t) {
     const toDb = (v) => (v > 0 ? 20 * Math.log10(v) : -Infinity);
     for (const ch of ['l', 'r']) {
       const pos = dbPos(toDb(agg[ch]));
-      meter[ch] = pos > meter[ch] ? pos : Math.max(pos, meter[ch] - 2.2);
-      $('#meter-' + ch).style.setProperty('--lvl', meter[ch].toFixed(1) + '%');
+      meter[ch] = pos > meter[ch] ? pos : Math.max(pos, meter[ch] - 2.2 * frameScale);
+      put($('#meter-' + ch), styleProp('--lvl'), meter[ch].toFixed(1) + '%');
     }
     const peakDb = toDb(Math.max(agg.l, agg.r));
     if (peakDb > meter.hold || t - meter.holdT > 1500) { meter.hold = peakDb; meter.holdT = t; }
-    meter.gr += (agg.gr - meter.gr) * 0.3;
-    $('#gr-fill').style.width = clamp((-meter.gr / 12) * 100, 0, 100) + '%';
+    meter.gr += (agg.gr - meter.gr) * ease(0.3);
+    put($('#gr-fill'), styleProp('width'), clamp((-meter.gr / 12) * 100, 0, 100).toFixed(1) + '%');
     if (Math.floor(t / 150) % 2 === 0) {
-      $('#peak-out').textContent = meter.hold > -90 ? fmt.db(meter.hold) : '−∞ dB';
-      $('#gr-out').textContent = fmt.db(Math.min(0, meter.gr));
+      put($('#peak-out'), textProp, meter.hold > -90 ? fmt.db(meter.hold) : '−∞ dB');
+      put($('#gr-out'), textProp, fmt.db(Math.min(0, meter.gr)));
       const badge = $('#out-badge');
       let cls = 'ok', txt = 'OK';
       if (!audio.enabled || kind !== 'web') { cls = 'idle'; txt = 'OFF'; }
       else if (!agg.fresh || peakDb < -90) { cls = 'idle'; txt = '—'; }
       else if (meter.gr < -0.5) { cls = 'lim'; txt = 'LIMIT'; }
-      badge.className = 'badge ' + cls;
-      badge.textContent = txt;
+      put(badge, (el, v) => { el.className = 'badge ' + cls; el.textContent = txt; }, cls + txt);
     }
   }
 
@@ -1412,7 +1419,7 @@
       const bw = W / BARS;
       for (let i = 0; i < BARS; i++) {
         const target = spec ? spec[i] : 0;
-        disp[i] += (target - disp[i]) * (target > disp[i] ? 0.5 : 0.12);
+        disp[i] += (target - disp[i]) * ease(target > disp[i] ? 0.5 : 0.12);
         const h = disp[i] * H * 0.85;
         if (h < 0.5) continue;
         ctx.beginPath();
@@ -1645,8 +1652,10 @@
     refreshMixer();
   });
 
+  /** True while any row has sound. */
   function renderMixerMeters(agg, t) {
     const current = tab && tab.id;
+    let heard = false;
     $$('.mix-item').forEach((item) => {
       const id = +item.dataset.id;
       let lv = 0;
@@ -1658,13 +1667,15 @@
           if (t - e.t < 500) lv = e.lv;
         }
       }
+      if (lv > 1e-4) heard = true;
       const bar = item.querySelector('.mini-meter i');
       const pos = dbPos(lv > 0 ? 20 * Math.log10(lv) : -Infinity);
       const prev = +(bar.dataset.v || 0);
-      const next = pos > prev ? pos : Math.max(pos, prev - 2.5);
+      const next = pos > prev ? pos : Math.max(pos, prev - 2.5 * frameScale);
       bar.dataset.v = next;
-      bar.style.width = next.toFixed(1) + '%';
+      put(bar, styleProp('width'), next.toFixed(1) + '%');
     });
+    return heard;
   }
 
   /* =========================================================
@@ -1833,12 +1844,19 @@
   /* ---------------------------------------------------------
      Animation loop: polling, meters, spectrum
      --------------------------------------------------------- */
-  let lastPoll = 0, lastNotice = 0;
+  /* Only while something moves (sound in this tab, or in a Mixer row, or meters falling back) the loop
+     runs on animation frames, drawn at ~30 fps. Otherwise it ticks 4× a second: the popup can stay open
+     for hours (sidebar) without costing CPU. A hidden page (collapsed sidebar) doesn't tick at all. */
+  let lastPoll = 0, lastNotice = 0, lastDraw = 0, heardAt = -Infinity;
+  let frameScale = 1; // time since the last drawing in 60 fps frames: meters and spectrum move by time, not by frames
+  const ease = (k) => 1 - Math.pow(1 - k, frameScale);
+  const QUIET_TICK = 250, DRAW_MS = 33, SETTLE_MS = 1500;
   function frame(t) {
     const eqVisible = currentPanel === 'eq';
-    const fast = currentPanel === 'booster' || eqVisible || currentPanel === 'mixer';
+    const meters = currentPanel === 'booster' || eqVisible || currentPanel === 'mixer';
+    const moving = t - heardAt < SETTLE_MS;
     // phones: ~10 polls per second instead of ~22 to save battery
-    if (link && t - lastPoll > (fast ? (MOBILE ? 100 : 45) : 400)) {
+    if (link && t - lastPoll > (meters && moving ? (MOBILE ? 100 : 45) : QUIET_TICK - 20)) {
       lastPoll = t;
       link.post({ type: 'poll', want: eqVisible && data.app.animations ? ['levels', 'spectrum'] : ['levels'] });
     }
@@ -1851,10 +1869,16 @@
       if (outChanged) renderOutput();
     }
     if (t - lastNotice > 500) { lastNotice = t; renderNotice(); }
-    if (currentPanel === 'booster') renderMeters(agg, t);
-    if (eqVisible) eq.drawSpectrum(agg.spectrum);
-    if (currentPanel === 'mixer') renderMixerMeters(agg, t);
-    requestAnimationFrame(frame);
+    if (agg.fresh && Math.max(agg.l, agg.r) > 1e-4) heardAt = t;
+    if (meters && t - lastDraw >= DRAW_MS) {
+      frameScale = Math.min(8, (t - (lastDraw || t - 16.7)) / 16.7);
+      lastDraw = t;
+      if (currentPanel === 'booster') renderMeters(agg, t);
+      if (eqVisible) eq.drawSpectrum(agg.spectrum);
+      if (currentPanel === 'mixer' && renderMixerMeters(agg, t)) heardAt = t;
+    }
+    if (meters && t - heardAt < SETTLE_MS) requestAnimationFrame(frame);
+    else setTimeout(() => requestAnimationFrame(frame), QUIET_TICK);
   }
 
   /* ---------------------------------------------------------

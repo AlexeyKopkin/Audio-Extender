@@ -170,13 +170,12 @@ output { font-variant-numeric: tabular-nums; }
   border-radius: 50%;
   filter: blur(60px);
   pointer-events: none;
-  animation: float 14s ease-in-out infinite alternate;
 }
 .bg-orbs span:nth-child(1) { width: 260px; height: 260px; background: var(--orb1); top: -110px; left: -70px; }
-.bg-orbs span:nth-child(2) { width: 240px; height: 240px; background: var(--orb2); bottom: -120px; right: -80px; animation-delay: -7s; }
-@keyframes float {
-  to { transform: translate(40px, 30px) scale(1.15); }
-}
+.bg-orbs span:nth-child(2) { width: 240px; height: 240px; background: var(--orb2); bottom: -120px; right: -80px; }
+/* The orbs stay still, and cards have no backdrop-filter (behind them is only this already blurred background):
+   a moving orb or a live meter on a frosted card makes the browser re-blur the popup every frame,
+   up to a full CPU core while the popup or the sidebar is open. */
 
 /* ---------- Top bar ---------- */
 .topbar {
@@ -202,11 +201,8 @@ output { font-variant-numeric: tabular-nums; }
 .site-chip em { font-style: normal; color: var(--text-mute); }
 
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-mute); display: inline-block; }
-.dot.live { background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); }
-  70%, 100% { box-shadow: 0 0 0 6px transparent; }
-}
+.dot.live { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+/* No endless animations anywhere in the popup: it often stays open (sidebar), and each one repaints forever. */
 
 .top-actions { display: flex; align-items: center; gap: 8px; }
 
@@ -271,7 +267,6 @@ output { font-variant-numeric: tabular-nums; }
   border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--border);
-  backdrop-filter: blur(16px);
 }
 .tab {
   position: relative;
@@ -334,7 +329,6 @@ output { font-variant-numeric: tabular-nums; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
-  backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
 }
 .card.compact { padding: 12px; }
@@ -608,6 +602,7 @@ option { background: var(--bg-2); color: var(--text); }
 .typeable:hover { outline: 1px dashed var(--border-strong); outline-offset: 2px; }
 .typeable:focus-visible { outline: 2px solid var(--a1); outline-offset: 2px; }
 #gauge-value { pointer-events: auto; } /* the gauge centre lets clicks through, except on the number */
+.app.na #gauge-value, .app.off #gauge-value { pointer-events: none; } /* … unless the whole panel is locked */
 .inline-num {
   font: inherit; letter-spacing: inherit; text-align: center;
   color: var(--text); -webkit-text-fill-color: var(--text);
@@ -637,7 +632,7 @@ option { background: var(--bg-2); color: var(--text); }
 .range-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-mute); margin-top: 2px; padding: 0 2px; }
 
 .gr-bar { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
-.gr-bar i { display: block; height: 100%; width: 20%; border-radius: inherit; background: linear-gradient(90deg, var(--warn), var(--a1)); transition: width .12s; }
+.gr-bar i { display: block; height: 100%; width: 20%; border-radius: inherit; background: linear-gradient(90deg, var(--warn), var(--a1)); }
 
 .meter-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .meter-row b { font-size: 10px; color: var(--text-mute); width: 8px; }
@@ -808,7 +803,6 @@ option { background: var(--bg-2); color: var(--text); }
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
-  backdrop-filter: blur(16px);
   transition: .25s;
 }
 .mix-item:hover { border-color: var(--border-strong); }
@@ -966,8 +960,8 @@ kbd {
   color: #fff;
   background: linear-gradient(135deg, #f43f5e, #ec4899);
   box-shadow: 0 6px 18px rgba(244, 63, 94, .45);
-  animation: beat 2.4s ease-in-out infinite;
 }
+.support:hover .heart { animation: beat 1.2s ease-in-out; } /* one beat on hover, never endless */
 .heart .ic { fill: currentColor; stroke-width: 1.5; }
 @keyframes beat {
   0%, 60%, 100% { transform: scale(1); }
@@ -1021,15 +1015,11 @@ html.mobile .btn,
 html.mobile .btn.small,
 html.mobile select,
 html.mobile .ae-pick { height: 40px; }
-/* save battery: no drifting background */
-html.mobile .bg-orbs span { animation: none; }
 
 /* full tab (import page) */
 html.page body { margin: 24px auto; border-radius: 18px; border: 1px solid var(--border); }
 
-html.no-anim .bg-orbs span,
-html.no-anim .dot.live,
-html.no-anim .heart { animation: none; }
+html.no-anim .support:hover .heart { animation: none; }
 
 a.btn { text-decoration: none; }
 
