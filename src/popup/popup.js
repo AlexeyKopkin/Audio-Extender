@@ -1292,7 +1292,7 @@
       const del = esc(tr('eq.deleteBand'));
       setHTML($('#band-chips'), bands.map((b, i) =>
         `<button class="band-chip${i === sel ? ' active' : ''}" data-i="${i}" style="--c:${COLORS[i % COLORS.length]}"><i>${i + 1}</i>${fmt.hz(b.f)}` +
-        (i === sel && bands.length > 1 ? `<span class="band-x" title="${del}" aria-label="${del}">×</span>` : '') + '</button>'
+        (i > 0 ? `<span class="band-x" title="${del}" aria-label="${del}">×</span>` : '') + '</button>'
       ).join('') + (bands.length < MAX_BANDS ? `<button class="band-chip add" id="band-add"><svg class="ic"><use href="#i-plus"/></svg>${esc(tr('eq.addBand'))}</button>` : ''));
     }
     $('#band-chips').addEventListener('click', (e) => {
@@ -1309,17 +1309,18 @@
     // keyboard: Delete / Backspace on a focused band removes it
     $('#band-chips').addEventListener('keydown', (e) => {
       const chip = e.target.closest('.band-chip');
-      if (!chip || chip.id === 'band-add' || (e.key !== 'Delete' && e.key !== 'Backspace')) return;
+      if (!chip || chip.id === 'band-add' || chip.dataset.i === '0' || (e.key !== 'Delete' && e.key !== 'Backspace')) return;
       e.preventDefault();
       deleteBand(+chip.dataset.i);
       const next = $('#band-chips .band-chip.active');
       if (next) next.focus();
     });
+    /** Every band but the first has its ×: any band can go without removing the ones after it. */
     function deleteBand(i) {
       const bands = E().bands;
-      if (bands.length <= 1 || !bands[i]) return;
+      if (i < 1 || !bands[i]) return;
       bands.splice(i, 1);
-      sel = Math.min(i, bands.length - 1);
+      sel = sel > i ? sel - 1 : Math.min(sel, bands.length - 1);
       syncEditor(); render(); edited();
     }
 
