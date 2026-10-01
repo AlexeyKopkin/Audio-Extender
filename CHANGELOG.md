@@ -29,6 +29,7 @@ Chrome and Edge.
 - Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
 - Pitch (Effects): raise or lower voice and music by up to 12 semitones, independent of the speed
 - Optional settings sync through the browser account (Settings): app settings, defaults, EQ presets, sound profiles and site settings; output devices stay on each device. When the account already has settings, you choose which ones to keep
+- Mixer: each slider sets the volume of that tab only, so two tabs of the same site can play at different levels; the site's own setting stays as it is. The tab keeps its volume until it is closed or goes to another site; the Booster of such a tab says so and has "Use the site's" to go back. The toolbar badge and the volume shortcuts follow the tab's volume
 - Mixer: "Same loudness in all tabs" — every tab is normalized to one target level, so switching between them doesn't jump in loudness; each site's gain still applies on top
 - Sound profiles (button in the header): save all settings of a site under a name and apply them to any site in one click; make the current settings the default for new sites. Included in export / import
 - "Only on sites I choose" (Settings): on every other site nothing is touched — no processing, no speed keys, no output device; the popup there offers "Turn on here"

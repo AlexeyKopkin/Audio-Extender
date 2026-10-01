@@ -49,8 +49,9 @@ function handleMessage(msg, sender) {
     const tabId = sender.tab && sender.tab.id;
     // bypass: the platform processes this tab's whole output itself (Chrome deep mode)
     const cap = PLATFORM.capture;
-    return Promise.all([getDuck(tabId), cap && tabId !== undefined ? cap.isOn(tabId) : false])
-      .then(([duck, bypass]) => ({ host: sender.tab ? AE.hostOf(sender.tab.url) : null, duck, bypass }));
+    const host = sender.tab ? AE.hostOf(sender.tab.url) : null;
+    return Promise.all([getDuck(tabId), cap && tabId !== undefined ? cap.isOn(tabId) : false, getTabGain(tabId, host)])
+      .then(([duck, bypass, tabGain]) => ({ host, duck, bypass, tabGain }));
   }
   // Popup edits are persisted here so they survive the popup closing mid-save.
   if (msg.type === 'persist' && msg.patch) {
@@ -59,6 +60,7 @@ function handleMessage(msg, sender) {
     return browser.storage.local.set(patch);
   }
   if (msg.type === 'inject' && typeof msg.tabId === 'number') return injectTab(msg.tabId);
+  if (msg.type === 'tab-gain' && typeof msg.tabId === 'number') return setTabGain(msg.tabId, msg.gain);
   if (msg.type === 'sync-state') return syncState();
   if (msg.type === 'sync-set') return setSync(!!msg.on, msg.mode);
   return undefined;
@@ -78,7 +80,7 @@ async function updateBadge(tab) {
   const host = AE.hostOf(tab.url);
   let text = '';
   if (data.app.badge && host && AE.siteAllowed(data.app, host)) {
-    const s = AE.effective(data, host);
+    const s = AE.withTabGain(AE.effective(data, host), await getTabGain(tab.id, host), data.app);
     if (s.enabled && s.gain !== 100) text = String(s.gain);
     else if (!s.enabled) text = 'off';
   }
@@ -95,7 +97,9 @@ async function updateAllBadges() {
 browser.action.setBadgeBackgroundColor({ color: '#7c3aed' });
 if (browser.action.setBadgeTextColor) browser.action.setBadgeTextColor({ color: '#ffffff' });
 
-browser.tabs.onUpdated.addListener((tabId, info, tab) => {
+browser.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+  // the tab's own volume belongs to the site it was set on
+  if (info.url && (await getTabGains())[tabId] && (await getTabGain(tabId, AE.hostOf(info.url))) === null) await setTabGain(tabId, null);
   if (info.url || info.status === 'complete') updateBadge(tab);
   if ('audible' in info) updateDucking();
 });
@@ -105,6 +109,7 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
 });
 browser.tabs.onRemoved.addListener(async (tabId) => {
   await setDuck(tabId, undefined);
+  if ((await getTabGains())[tabId]) await setTabGain(tabId, null, true);
   updateDucking();
 });
 // Firefox for Android has no windows API; a throw here would skip every listener below.
@@ -137,9 +142,24 @@ function speedBy(s, dir) {
   s.fx.speed.value = Math.min(AE.SPEED_MAX, Math.max(AE.SPEED_MIN, v));
 }
 
+/** Volume shortcuts change what is heard in the tab: its own volume when the Mixer gave it one. */
+async function stepGain(dir) {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  const host = tab && AE.hostOf(tab.url);
+  const own = host ? await getTabGain(tab.id, host) : null;
+  if (own === null) {
+    editActiveSite((s) => { s.gain = Math.min(AE.gainCap(data.app), Math.max(0, s.gain + dir * GAIN_STEP)); s.enabled = true; });
+    return;
+  }
+  await (ready = loadData());
+  const s = AE.effective(data, host);
+  if (!s.enabled) await browser.storage.local.set(AE.storeFor(data, host, { ...s, enabled: true }));
+  await setTabGain(tab.id, Math.min(AE.gainCap(data.app), Math.max(0, own + dir * GAIN_STEP)));
+}
+
 function onCommand(name) {
-  if (name === 'gain-up') editActiveSite((s) => { s.gain = Math.min(AE.gainCap(data.app), s.gain + GAIN_STEP); s.enabled = true; });
-  else if (name === 'gain-down') editActiveSite((s) => { s.gain = Math.max(0, s.gain - GAIN_STEP); s.enabled = true; });
+  if (name === 'gain-up') stepGain(1);
+  else if (name === 'gain-down') stepGain(-1);
   else if (name === 'toggle') editActiveSite((s) => { s.enabled = !s.enabled; });
   else if (name === 'speed-up') editActiveSite((s) => speedBy(s, 1));
   else if (name === 'speed-down') editActiveSite((s) => speedBy(s, -1));
@@ -175,6 +195,35 @@ async function updateDucking() {
     await setDuck(tab.id, want);
     browser.tabs.sendMessage(tab.id, { type: 'duck', factor: want }).catch(() => {});
   }
+}
+
+/* ---------- the tab's own volume (Mixer) ----------
+   { tabId: { host, gain } } in storage.session: it survives the event page being unloaded and ends
+   with the tab, a navigation to another site, or the browser. The page applies it on top of the site's
+   settings (AE.withTabGain); the popup reads it from storage.session. */
+async function getTabGains() { return (await browser.storage.session.get('tabGain')).tabGain || {}; }
+async function getTabGain(tabId, host) {
+  const t = tabId === undefined ? null : (await getTabGains())[tabId];
+  return t && t.host === host && typeof t.gain === 'number' ? t.gain : null;
+}
+/** `gain` null: back to the site's volume. One at a time: a dragged Mixer slider sends many in a row. */
+let tabGainQueue = Promise.resolve();
+function setTabGain(tabId, gain, closed) {
+  const run = tabGainQueue.then(() => writeTabGain(tabId, gain, closed));
+  tabGainQueue = run.catch(() => {});
+  return run;
+}
+async function writeTabGain(tabId, gain, closed) {
+  const all = await getTabGains();
+  let host = null;
+  if (!closed) { try { host = AE.hostOf((await browser.tabs.get(tabId)).url); } catch { closed = true; } }
+  if (typeof gain === 'number' && isFinite(gain) && host) all[tabId] = { host, gain: Math.round(gain) };
+  else delete all[tabId];
+  await browser.storage.session.set({ tabGain: all });
+  if (closed) return { ok: true };
+  browser.tabs.sendMessage(tabId, { type: 'tab-gain', gain: all[tabId] ? all[tabId].gain : null }).catch(() => {});
+  try { await updateBadge(await browser.tabs.get(tabId)); } catch { /* tab gone */ }
+  return { ok: true };
 }
 
 /* ---------- settings sync (opt-in: Settings → Sync) ----------

@@ -548,6 +548,7 @@ option { background: var(--bg-2); color: var(--text); }
 /* none of the page's audio can be processed: the gauge fades and says why */
 .gauge-card.unheard .gauge svg, .gauge-card.unheard .gauge-center { opacity: .45; transition: opacity .2s; }
 .boost-state { margin-top: 10px; text-align: center; font-size: 12px; font-weight: 600; color: var(--warn); }
+.tab-gain-note { margin-top: 10px; text-align: center; font-size: 12px; font-weight: 600; color: var(--a1); }
 .link-btn { font: inherit; color: var(--a1); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .row-select { flex: none; min-width: 96px; }
 #allow-add { margin-top: 8px; }

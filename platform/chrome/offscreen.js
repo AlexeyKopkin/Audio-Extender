@@ -15,12 +15,12 @@
   const createChainKit = window.__audioExtenderChain;
   delete window.__audioExtenderChain;
 
-  const captures = new Map(); // tabId -> { ctx, stream, src, chain, env, out, outState }
+  const captures = new Map(); // tabId -> { ctx, stream, src, chain, env, base, tabGain, out, outState }
 
   const isActive = (settings, duck) => !!settings && (AE.needsProcessing(settings) || duck < 1);
 
-  async function start({ tabId, streamId, settings, duck, output }) {
-    if (captures.has(tabId)) { update({ tabId, settings, duck, output }); return { ok: true }; }
+  async function start({ tabId, streamId, settings, tabGain, duck, output }) {
+    if (captures.has(tabId)) { update({ tabId, settings, tabGain, duck, output }); return { ok: true }; }
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -39,14 +39,16 @@
       return { ok: false, error: 'audio output did not start' };
     }
     try {
-      const env = { S: settings, duck, active: isActive(settings, duck) };
+      const own = typeof tabGain === 'number' ? tabGain : null;
+      const S = AE.withTabGain(settings, own);
+      const env = { S, duck, active: isActive(S, duck) };
       const { Chain } = createChainKit(env);
       const chain = new Chain(ctx);           // chain.out → ctx.destination
       const src = ctx.createMediaStreamSource(stream);
       src.connect(chain.input);
       const track = stream.getAudioTracks()[0];
       if (track) track.addEventListener('ended', () => { stop(tabId); chrome.runtime.sendMessage({ type: 'capture-ended', tabId }).catch(() => {}); });
-      const c = { ctx, stream, src, chain, env, out: '', outState: '' };
+      const c = { ctx, stream, src, chain, env, base: settings, tabGain: own, out: '', outState: '' };
       captures.set(tabId, c);
       setOutput(c, output);
       return { ok: true };
@@ -57,10 +59,13 @@
     }
   }
 
-  function update({ tabId, settings, duck, output }) {
+  /** `settings`: the site's; `tabGain` (from the service worker only): the tab's own volume, null = none. */
+  function update({ tabId, settings, tabGain, duck, output }) {
     const c = captures.get(tabId);
     if (!c) return;
-    if (settings) c.env.S = settings;
+    if (tabGain !== undefined) c.tabGain = typeof tabGain === 'number' ? tabGain : null;
+    if (settings) c.base = settings;
+    c.env.S = AE.withTabGain(c.base, c.tabGain);
     if (typeof duck === 'number') c.env.duck = duck;
     c.env.active = isActive(c.env.S, c.env.duck);
     c.chain.apply();

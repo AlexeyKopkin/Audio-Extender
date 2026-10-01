@@ -30,6 +30,8 @@
   const demoListeners = [];
   const demoTabListeners = [];
   const demoRead = () => { try { return JSON.parse(localStorage.getItem(demoKey)) || {}; } catch { return {}; } };
+  const demoTabGains = {}; // the tabs' own volumes (Mixer), for this page only
+  const demoTabGainListeners = [];
 
   const preview = {
     isExtension: false,
@@ -87,6 +89,14 @@
     persist(patch) { return this.save(patch); },
     canSync: false,
     async getRaw(key) { return demoRead()[key]; },
+    async tabGains() { return { ...demoTabGains }; },
+    async setTabGain(tabId, gain) {
+      const t = DEMO_TABS.find((x) => x.id === tabId);
+      if (typeof gain === 'number' && t) demoTabGains[tabId] = { host: AE.hostOf(t.url), gain };
+      else delete demoTabGains[tabId];
+      demoTabGainListeners.forEach((f) => f({ ...demoTabGains }));
+    },
+    onTabGainsChanged(cb) { demoTabGainListeners.push(cb); },
     async clearAll() { try { localStorage.removeItem(demoKey); } catch { /* ignore */ } demoListeners.forEach((f) => f({ app: {} })); },
     onChanged(cb) { demoListeners.push(cb); },
 
@@ -109,7 +119,8 @@
           const tab = DEMO_TABS.find((x) => x.id === tabId);
           const playing = tab && tab.audible && !tab.mutedInfo.muted;
           const on = !settings || settings.enabled;
-          const g = playing ? Math.min(1.25, 0.32 * (on && settings ? settings.gain / 100 : 1)) : 0;
+          const own = demoTabGains[tabId] ? demoTabGains[tabId].gain : null;
+          const g = playing ? Math.min(1.25, 0.32 * (on && settings ? (own ?? settings.gain) / 100 : 1)) : 0;
           const beat = Math.max(0, Math.sin(t / 260)) ** 4;
           for (const c of ['l', 'r']) {
             const target = g * (0.75 + 0.25 * beat + (Math.random() - 0.5) * 0.15);

@@ -16,6 +16,8 @@
   let host = null;
   let settings = null;
   let duck = 1;
+  let tabGain = null;   // this tab's own volume from the Mixer (null: the site's), see AE.withTabGain
+  let base = null;      // the site's settings before the tab's own volume
   let bypass = false;   // the whole tab is processed elsewhere (deep mode): the page engine must not touch the sound
   let lastReply = null;
   let lastStatus = { sources: 0, blocked: 0, playing: 0, active: false };
@@ -27,10 +29,11 @@
     document.dispatchEvent(new CustomEvent(TO_PAGE, { detail: JSON.stringify(msg) }));
   }
 
-  /** New settings for this frame; the speed badge confirms a speed change. */
+  /** New settings for this frame (the site's; the tab's own volume goes on top); the speed badge confirms a speed change. */
   function setSettings(next) {
     const prev = settings && settings.fx.speed.value;
-    settings = next;
+    base = next;
+    settings = next && AE.withTabGain(next, tabGain, data && AE.normalize(data).app);
     pushSettings();
     if (prev != null && next && next.fx.speed.value !== prev) speed.changed(next.fx.speed.value);
   }
@@ -209,8 +212,8 @@
     app: () => (data ? AE.normalize(data).app : null),
     host: () => host,
     async setSpeed(v) {
-      if (!settings) return;
-      setSettings({ ...settings, fx: { ...settings.fx, speed: { ...settings.fx.speed, value: v } } });
+      if (!base) return;
+      setSettings({ ...base, fx: { ...base.fx, speed: { ...base.fx.speed, value: v } } });
       const cur = await browser.storage.local.get(AE.KEYS);
       const s = AE.effective(cur, host);
       s.fx.speed.value = v;
@@ -242,6 +245,9 @@
     if (msg && msg.type === 'duck') {
       duck = msg.factor;
       pushSettings();
+    } else if (msg && msg.type === 'tab-gain') {
+      tabGain = typeof msg.gain === 'number' ? msg.gain : null;
+      if (base) setSettings(base);
     } else if (msg && msg.type === 'bypass') {
       bypass = !!msg.on;
       pushSettings();
@@ -253,6 +259,7 @@
   browser.runtime.sendMessage({ type: 'hello' }).then((info) => {
     host = info && info.host;
     if (info && typeof info.duck === 'number') duck = info.duck;
+    if (info && typeof info.tabGain === 'number') tabGain = info.tabGain;
     if (info && info.bypass) bypass = true;
     refresh();
   }).catch(() => { /* extension reloaded */ });

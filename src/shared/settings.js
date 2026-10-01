@@ -177,6 +177,13 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     return s;
   }
 
+  /** A tab's own volume (Mixer), kept while the tab stays on that site: it replaces the site's gain in
+   *  this tab only. Nothing changes where the site is switched off or outside the allow list. */
+  function withTabGain(s, tabGain, app) {
+    if (typeof tabGain !== 'number' || !isFinite(tabGain) || !s.enabled) return s;
+    return { ...s, gain: Math.max(0, Math.min(Math.round(tabGain), gainCap(app))) };
+  }
+
   /** Where edits for `host` are stored: its own profile or the global defaults. */
   function storeFor(data, host, audio) {
     const d = normalize(data);
@@ -249,7 +256,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
     G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, SPEED_KEYS, speedKeyMap, speedKeyOk, siteAllowed, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
-    clone, merge, hostOf, normalize, effective, storeFor, outputFor,
+    clone, merge, hostOf, normalize, effective, withTabGain, storeFor, outputFor,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
