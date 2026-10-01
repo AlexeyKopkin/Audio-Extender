@@ -1865,6 +1865,11 @@
     } else renderProfiles();
   });
 
+  // the browser's shortcut page; if it can't be opened, the text still says where it is
+  $('#hk-open').addEventListener('click', async () => {
+    try { await API.openShortcuts(); if (API.context === 'popup') window.close(); } catch { /* the text says where */ }
+  });
+
   async function renderHotkeys() {
     const names = {
       _execute_action: 'set.hk.open', 'gain-up': 'set.hk.up', 'gain-down': 'set.hk.down', toggle: 'set.hk.toggle',

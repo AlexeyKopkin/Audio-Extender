@@ -39,6 +39,7 @@ Chrome and Edge.
 - Fixed (Firefox): a chosen output device could show as "…" when its name was not saved; the name is now always kept (or looked up once the device plays), and a device without a name shows as "Chosen device"
 - Equalizer: one switch per kind (Parametric, 10 bands, 31 bands). Switching one on switches the others off, and all can be off; the tab of the equalizer that is on has a dot, so it is always clear which one processes the sound. The tabs only show an equalizer, they don't switch it on
 - EQ presets apply to the equalizer that is on: on the 10- or 31-band EQ a preset sets its sliders to follow the preset's curve (a preset saved on another kind is matched the same way). While all are off, the preset menu is disabled
+- Settings: "Change: …extensions/shortcuts" (Chrome / Edge) and "about:addons → …" (Firefox) is now a link that opens the browser's keyboard-shortcut page. Chrome / Edge: the "Rate" button links to the store the extension was installed from (hidden for a copy not installed from a store)
 - The group headings in the preset list ("Built-in", "My presets") follow the theme instead of showing as white on white
 - Parametric EQ: every band except the first has a × to remove it (Delete / Backspace on a band works too), instead of a trash button that was easy to miss
 - The browser's own right-click menu (Save page as, View source…) no longer opens in the popup; text fields keep it for copy and paste
