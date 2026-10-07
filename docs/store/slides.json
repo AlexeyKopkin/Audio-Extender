@@ -1,0 +1,56 @@
+{
+  "en": {
+    "01-booster": { "title": "Up to 600% louder", "sub": "Without distortion — a built-in limiter keeps every video clean.", "bullets": ["Gain dial, slider and one-click presets", "Play each tab on its own speakers or headphones", "Remembered for every site"] },
+    "02-equalizer": { "title": "Studio-grade equalizer", "sub": "Drag the curve — or use 10 and 31 bands.", "bullets": ["Up to 8 parametric bands", "Presets that fit any equalizer", "Headphone correction for thousands of models"] },
+    "03-speed": { "title": "Video speed controller", "sub": "0.1× to 16× — with the keys you already know.", "bullets": ["S / D slower and faster, R back to 1×", "Z / X jump back and forward", "A short badge, no permanent overlay"] },
+    "04-mixer": { "title": "Every tab under control", "sub": "All tabs playing sound, in one place.", "bullets": ["Volume for each tab — even two tabs of one site", "Same loudness in all tabs", "Mute, solo, output device per tab"] },
+    "05-effects": { "title": "Fix the sound with one switch", "sub": "Everyday problems, solved in a click.", "bullets": ["Clear dialogue and night mode", "Bass boost, stereo width, pitch", "Normalization, mono, balance"] },
+    "06-themes": { "title": "5 themes · 6 languages", "sub": "Make it yours. No ads, no tracking.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Popup or side panel"] },
+    "promo": { "bold": "Volume booster 600%", "rest": ", equalizer,<br>speed controller and per-tab mixer" }
+  },
+  "ru": {
+    "01-booster": { "title": "Громче до 600%", "sub": "Без искажений — встроенный лимитер держит звук чистым.", "bullets": ["Регулятор, ползунок и готовые значения", "Каждая вкладка — на своих колонках или наушниках", "Запоминается для каждого сайта"] },
+    "02-equalizer": { "title": "Студийный эквалайзер", "sub": "Тяните кривую — или используйте 10 и 31 полосу.", "bullets": ["До 8 параметрических полос", "Пресеты подходят к любому эквалайзеру", "Коррекция тысяч моделей наушников"] },
+    "03-speed": { "title": "Скорость видео", "sub": "От 0.1× до 16× — привычными клавишами.", "bullets": ["S / D медленнее и быстрее, R — обратно 1×", "Z / X — назад и вперёд", "Короткая плашка, ничего поверх видео"] },
+    "04-mixer": { "title": "Все вкладки под контролем", "sub": "Все вкладки со звуком — в одном месте.", "bullets": ["Громкость каждой вкладки — даже двух на одном сайте", "Одинаковая громкость во всех вкладках", "Заглушить, соло, устройство для вкладки"] },
+    "05-effects": { "title": "Звук — одним переключателем", "sub": "Частые проблемы — решаются в один клик.", "bullets": ["Чёткие диалоги и ночной режим", "Бас, ширина стерео, высота тона", "Выравнивание громкости, моно, баланс"] },
+    "06-themes": { "title": "5 тем · 6 языков", "sub": "Настройте под себя. Без рекламы и слежки.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Всплывающее окно или боковая панель"] },
+    "promo": { "bold": "Громкость до 600%", "rest": ", эквалайзер,<br>скорость видео и микшер вкладок" }
+  },
+  "uk": {
+    "01-booster": { "title": "Гучніше до 600%", "sub": "Без спотворень — вбудований лімітер тримає звук чистим.", "bullets": ["Регулятор, повзунок і готові значення", "Кожна вкладка — на своїх колонках чи навушниках", "Запам’ятовується для кожного сайту"] },
+    "02-equalizer": { "title": "Студійний еквалайзер", "sub": "Тягніть криву — або використовуйте 10 і 31 смугу.", "bullets": ["До 8 параметричних смуг", "Пресети підходять до будь-якого еквалайзера", "Корекція тисяч моделей навушників"] },
+    "03-speed": { "title": "Швидкість відео", "sub": "Від 0.1× до 16× — звичними клавішами.", "bullets": ["S / D повільніше й швидше, R — назад до 1×", "Z / X — назад і вперед", "Коротка плашка, нічого поверх відео"] },
+    "04-mixer": { "title": "Усі вкладки під контролем", "sub": "Усі вкладки зі звуком — в одному місці.", "bullets": ["Гучність кожної вкладки — навіть двох на одному сайті", "Однакова гучність в усіх вкладках", "Вимкнути звук, соло, пристрій для вкладки"] },
+    "05-effects": { "title": "Звук — одним перемикачем", "sub": "Поширені проблеми — розв’язуються в один клік.", "bullets": ["Чіткі діалоги та нічний режим", "Бас, ширина стерео, висота тону", "Вирівнювання гучності, моно, баланс"] },
+    "06-themes": { "title": "5 тем · 6 мов", "sub": "Налаштуйте під себе. Без реклами та стеження.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Спливне вікно або бічна панель"] },
+    "promo": { "bold": "Гучність до 600%", "rest": ", еквалайзер,<br>швидкість відео та мікшер вкладок" }
+  },
+  "de": {
+    "01-booster": { "title": "Bis zu 600 % lauter", "sub": "Ohne Verzerrung — ein eingebauter Limiter hält jedes Video sauber.", "bullets": ["Drehregler, Schieberegler und Ein-Klick-Werte", "Jeder Tab auf eigenen Lautsprechern oder Kopfhörern", "Für jede Website gemerkt"] },
+    "02-equalizer": { "title": "Equalizer in Studioqualität", "sub": "Kurve ziehen — oder 10 und 31 Bänder nutzen.", "bullets": ["Bis zu 8 parametrische Bänder", "Presets passen zu jedem Equalizer", "Korrektur für Tausende Kopfhörer"] },
+    "03-speed": { "title": "Videogeschwindigkeit", "sub": "0.1× bis 16× — mit den bekannten Tasten.", "bullets": ["S / D langsamer und schneller, R zurück auf 1×", "Z / X zurück- und vorspringen", "Kurzes Badge, keine Dauereinblendung"] },
+    "04-mixer": { "title": "Jeder Tab im Griff", "sub": "Alle Tabs mit Ton an einem Ort.", "bullets": ["Lautstärke pro Tab — auch zwei Tabs einer Website", "Gleiche Lautstärke in allen Tabs", "Stumm, Solo, Ausgabegerät pro Tab"] },
+    "05-effects": { "title": "Klang mit einem Schalter verbessern", "sub": "Alltägliche Probleme, mit einem Klick gelöst.", "bullets": ["Klare Dialoge und Nachtmodus", "Bass, Stereobreite, Tonhöhe", "Normalisierung, Mono, Balance"] },
+    "06-themes": { "title": "5 Designs · 6 Sprachen", "sub": "Ganz nach Ihrem Geschmack. Ohne Werbung und Tracking.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Popup oder Seitenbereich"] },
+    "promo": { "bold": "Lautstärke bis 600 %", "rest": ", Equalizer,<br>Videogeschwindigkeit und Tab-Mixer" }
+  },
+  "it": {
+    "01-booster": { "title": "Fino al 600% più forte", "sub": "Senza distorsione — un limitatore integrato mantiene pulito ogni video.", "bullets": ["Manopola, cursore e valori con un clic", "Ogni scheda sui propri altoparlanti o cuffie", "Ricordato per ogni sito"] },
+    "02-equalizer": { "title": "Equalizzatore da studio", "sub": "Trascina la curva — o usa 10 e 31 bande.", "bullets": ["Fino a 8 bande parametriche", "Preset adatti a ogni equalizzatore", "Correzione per migliaia di cuffie"] },
+    "03-speed": { "title": "Velocità dei video", "sub": "Da 0.1× a 16× — con i tasti che conosci già.", "bullets": ["S / D più lento e più veloce, R torna a 1×", "Z / X salta indietro e avanti", "Un breve badge, nessuna sovrapposizione fissa"] },
+    "04-mixer": { "title": "Ogni scheda sotto controllo", "sub": "Tutte le schede con audio, in un unico posto.", "bullets": ["Volume per scheda — anche due dello stesso sito", "Stesso volume in tutte le schede", "Muto, solo, dispositivo per scheda"] },
+    "05-effects": { "title": "Suono migliore con un interruttore", "sub": "Problemi quotidiani, risolti con un clic.", "bullets": ["Dialoghi chiari e modalità notte", "Bassi, ampiezza stereo, intonazione", "Normalizzazione, mono, bilanciamento"] },
+    "06-themes": { "title": "5 temi · 6 lingue", "sub": "Fallo tuo. Senza pubblicità né tracciamento.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Popup o pannello laterale"] },
+    "promo": { "bold": "Volume fino al 600%", "rest": ", equalizzatore,<br>velocità video e mixer delle schede" }
+  },
+  "fr": {
+    "01-booster": { "title": "Jusqu’à 600 % plus fort", "sub": "Sans distorsion — un limiteur intégré garde chaque vidéo propre.", "bullets": ["Molette, curseur et valeurs en un clic", "Chaque onglet sur ses propres haut-parleurs ou écouteurs", "Mémorisé pour chaque site"] },
+    "02-equalizer": { "title": "Égaliseur de studio", "sub": "Faites glisser la courbe — ou utilisez 10 et 31 bandes.", "bullets": ["Jusqu’à 8 bandes paramétriques", "Préréglages adaptés à tout égaliseur", "Correction pour des milliers de casques"] },
+    "03-speed": { "title": "Vitesse des vidéos", "sub": "De 0.1× à 16× — avec les touches que vous connaissez.", "bullets": ["S / D plus lent et plus rapide, R retour à 1×", "Z / X saut arrière et avant", "Un court badge, pas d’incrustation permanente"] },
+    "04-mixer": { "title": "Chaque onglet sous contrôle", "sub": "Tous les onglets avec du son, au même endroit.", "bullets": ["Volume par onglet — même deux onglets d’un site", "Même volume dans tous les onglets", "Muet, solo, appareil de sortie par onglet"] },
+    "05-effects": { "title": "Un meilleur son en un geste", "sub": "Les problèmes courants, réglés en un clic.", "bullets": ["Dialogues clairs et mode nuit", "Basses, largeur stéréo, hauteur", "Normalisation, mono, balance"] },
+    "06-themes": { "title": "5 thèmes · 6 langues", "sub": "À votre goût. Sans publicité ni pistage.", "bullets": ["Neon, Cyber, Sunset, Aurora, Light", "{langs}", "Popup ou panneau latéral"] },
+    "promo": { "bold": "Volume jusqu’à 600 %", "rest": ", égaliseur,<br>vitesse vidéo et mixeur d’onglets" }
+  }
+}
