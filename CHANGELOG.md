@@ -2,15 +2,18 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0]
 
-Chrome and Edge.
+The first release for Chrome and Edge, and many new features in every browser.
+
+### Chrome and Edge
 
 - Chrome and Edge version from the same code (one package for both)
 - Chrome / Edge: option to open in the browser's side panel
 - Chrome / Edge: deep mode — for audio the page can't hand over (another domain without permission), the popup offers to process the whole tab; the browser shows a sharing indicator on the tab while it's on
-- The site line shows "audio playing" also when the audio plays but can't be processed
-- Clearer when a page's audio can't be processed: the notice names the reason (copy protection or audio from another site), and the Booster gauge fades with a short "Not applied" line instead of moving without effect (Chrome / Edge: with a Deep mode link)
+
+### New
+
 - Output device per tab: "Play on" in the Booster and in every Mixer row sends a tab to other speakers or headphones; remembered per site, back to the default device if the chosen one is missing
   - Firefox: the first choice opens Firefox's device picker from a button on the page; on later visits the device switches over with the first click on the page
   - Firefox: players in a frame of the same site follow the tab's device after the first click in the player; players embedded from other sites stay on the default device (Firefox doesn't allow it there)
@@ -19,31 +22,38 @@ Chrome and Edge.
 - Playback speed from 0.1× to 16×; the slider has a log scale, so the usual speeds around 1× stay easy to set. Firefox plays sound only between 0.125× and 8×; outside that range the popup says so
 - Speed keys on pages: `S` / `D` slower / faster by 0.1, `R` back to 1×, `G` between 1× and the last speed, `Z` / `X` back / forward 10 s. The step (0.05 / 0.1 / 0.25) and the jump (5 / 10 / 15 / 30 s) can be changed. The keys work on any keyboard layout, never while typing, and can be turned off everywhere or for one site (Effects → Playback speed); a key press is remembered as the site's speed
 - A short "1.5×" badge over the video confirms a speed change, then disappears (can be turned off); for videos of a minute or longer it also shows the time left at that speed ("1.5× · −12:30")
-- Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
-- Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
-- Shortcuts for speed faster / slower / back to 1× that work without clicking into the page; they have no keys by default — set them in the browser's extension shortcuts
 - The speed keys can be changed or turned off one by one (Effects → Playback speed → Change keys)
 - Optional keys for an A-B loop (set A, set B, clear) and frame-by-frame steps; the jump keys can jump further at higher speed
 - Optional hold key: 2× while the key is held, the site's speed again on release (assign it under Change keys)
 - Optional: Shift + mouse wheel over a video changes the speed (Effects → Playback speed, off by default)
-- Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
+- Shortcuts for speed faster / slower / back to 1× that work without clicking into the page; they have no keys by default — set them in the browser's extension shortcuts
 - Pitch (Effects): raise or lower voice and music by up to 12 semitones, independent of the speed
-- Optional settings sync through the browser account (Settings): app settings, defaults, EQ presets, sound profiles and site settings; output devices stay on each device. When the account already has settings, you choose which ones to keep
-- Mixer: each slider sets the volume of that tab only, so two tabs of the same site can play at different levels; the site's own setting stays as it is. The tab keeps its volume until it is closed or goes to another site; the Booster of such a tab says so and has "Use the site's" to go back. The toolbar badge and the volume shortcuts follow the tab's volume
+- Exact values: click the gain number or the speed to type a value; Shift + mouse wheel over the gauge changes the gain by 1%
 - Mixer: "Same loudness in all tabs" — every tab is normalized to one target level, so switching between them doesn't jump in loudness; each site's gain still applies on top
 - Sound profiles (button in the header): save all settings of a site under a name and apply them to any site in one click; make the current settings the default for new sites. Included in export / import
 - "Only on sites I choose" (Settings): on every other site nothing is touched — no processing, no speed keys, no output device; the popup there offers "Turn on here"
 - Maximum volume (Settings): 150 / 200 / 300 / 400 / 600%. Nothing plays louder than that — not the slider, the Mixer, the shortcut, or a site saved or imported with a higher level
-- A paused tab no longer keeps the computer awake: audio processing goes to sleep after 10 seconds without playback and wakes up with the next play
-- Fixed: right after the browser starts (restored tabs) a page could wait up to two seconds for its settings; speed keys pressed meanwhile went to the site. A page now reads its settings at once
-- Fixed (Firefox): a chosen output device could show as "…" when its name was not saved; the name is now always kept (or looked up once the device plays), and a device without a name shows as "Chosen device"
+- Optional settings sync through the browser account (Settings): app settings, defaults, EQ presets, sound profiles and site settings; output devices stay on each device. When the account already has settings, you choose which ones to keep
+
+### Changed
+
+- Mixer: each slider sets the volume of that tab only, so two tabs of the same site can play at different levels; the site's own setting stays as it is. The tab keeps its volume until it is closed or goes to another site; the Booster of such a tab says so and has "Use the site's" to go back. The toolbar badge and the volume shortcuts follow the tab's volume
 - Equalizer: one switch per kind (Parametric, 10 bands, 31 bands). Switching one on switches the others off, and all can be off; the tab of the equalizer that is on has a dot, so it is always clear which one processes the sound. The tabs only show an equalizer, they don't switch it on
 - EQ presets apply to the equalizer that is on: on the 10- or 31-band EQ a preset sets its sliders to follow the preset's curve (a preset saved on another kind is matched the same way). While all are off, the preset menu is disabled
-- Settings: "Change: …extensions/shortcuts" (Chrome / Edge) and "about:addons → …" (Firefox) is now a link that opens the browser's keyboard-shortcut page. Chrome / Edge: the "Rate" button links to the store the extension was installed from (hidden for a copy not installed from a store)
-- The group headings in the preset list ("Built-in", "My presets") follow the theme instead of showing as white on white
 - Parametric EQ: every band except the first has a × to remove it (Delete / Backspace on a band works too), instead of a trash button that was easy to miss
-- The browser's own right-click menu (Save page as, View source…) no longer opens in the popup; text fields keep it for copy and paste
+- A paused tab no longer keeps the computer awake: audio processing goes to sleep after 10 seconds without playback and wakes up with the next play
 - Much lower CPU use while the popup or the sidebar / side panel is open: about one CPU core before, close to nothing now when no sound plays. The background and the status dot no longer animate, the cards no longer blur what is behind them live, and the meters redraw only while there is sound
+- The site line shows "audio playing" also when the audio plays but can't be processed
+- Clearer when a page's audio can't be processed: the notice names the reason (copy protection or audio from another site), and the Booster gauge fades with a short "Not applied" line instead of moving without effect (Chrome / Edge: with a Deep mode link)
+- Players that set the speed back to 1× when a new video starts get the site's speed again; a change made later in the player's own menu is kept
+- Settings: "Change: …extensions/shortcuts" (Chrome / Edge) and "about:addons → …" (Firefox) is now a link that opens the browser's keyboard-shortcut page. Chrome / Edge: the "Rate" button links to the store the extension was installed from (hidden for a copy not installed from a store)
+- The browser's own right-click menu (Save page as, View source…) no longer opens in the popup; text fields keep it for copy and paste
+
+### Fixed
+
+- Right after the browser starts (restored tabs) a page could wait up to two seconds for its settings; speed keys pressed meanwhile went to the site. A page now reads its settings at once
+- Firefox: the limiter's "Reduction" no longer shows about −1 dB when nothing is being limited
+- The group headings in the preset list ("Built-in", "My presets") follow the theme instead of showing as white on white
 
 ## [0.2.1] — 2026-09-29
 
