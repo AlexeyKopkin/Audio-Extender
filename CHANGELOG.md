@@ -2,7 +2,7 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [0.5.0]
+## [0.5.0] — 2026-10-01
 
 The first release for Chrome and Edge, and many new features in every browser.
 
