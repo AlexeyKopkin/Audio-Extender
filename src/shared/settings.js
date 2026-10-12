@@ -139,6 +139,11 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
     return o && typeof o.id === 'string' && o.id ? { id: o.id, label: String(o.label || '') } : null;
   }
 
+  /** The device to play on right now: none while the site is switched off (the power button turns everything off). */
+  function outputInUse(data, host) {
+    return effective(data, host).enabled ? outputFor(data, host) : null;
+  }
+
   /** Speed keys in use: { code: action }. Unusable codes and a second use of the same key are dropped. */
   function speedKeyMap(app) {
     const m = { ...SPEED_KEYS, ...(app && isObj(app.speedKeyMap) ? app.speedKeyMap : {}) };
@@ -256,7 +261,7 @@ if (typeof globalThis.browser === 'undefined' && typeof globalThis.chrome !== 'u
   global.AE = {
     KEYS, SCHEMA, PROTOCOL, migrate,
     G10, G31, MAX_GAIN, GAIN_CAPS, gainCap, SPEED_MIN, SPEED_MAX, SPEED_STEPS, SEEK_STEPS, SPEED_KEYS, speedKeyMap, speedKeyOk, siteAllowed, DEFAULT_AUDIO, DEFAULT_APP, DEFAULT_BANDS,
-    clone, merge, hostOf, normalize, effective, withTabGain, storeFor, outputFor,
+    clone, merge, hostOf, normalize, effective, withTabGain, storeFor, outputFor, outputInUse,
     eqActive, matrixActive, needsProcessing, parseAutoEq,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

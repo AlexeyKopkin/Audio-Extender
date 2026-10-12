@@ -39,11 +39,12 @@ async function settingsFor(tabId) {
   const tab = await chrome.tabs.get(tabId);
   await ready;
   const host = AE.hostOf(tab.url);
-  const output = AE.outputFor(data, host);
+  const output = AE.outputInUse(data, host);
   // the tab's own volume (Mixer) goes separately: the popup's live edits carry only the site's settings
   const own = await getTabGain(tabId, host);
   const tabGain = own === null ? null : Math.min(own, AE.gainCap(data.app));
-  return { host, settings: AE.effective(data, host), tabGain, duck: await getDuck(tabId), output: output ? output.id : '' };
+  const settings = AE.effective(data, host);
+  return { host, settings, tabGain, duck: settings.enabled ? await getDuck(tabId) : 1, output: output ? output.id : '' };
 }
 
 async function captureStart(tabId) {
@@ -80,6 +81,7 @@ async function pushToCaptures(onlyTabId) {
     if (onlyTabId !== undefined && tabId !== onlyTabId) continue;
     try {
       const { host, settings, tabGain, duck, output } = await settingsFor(tabId);
+      if (!settings.enabled) { await captureStop(tabId); continue; } // switched off (the power button): the tab is the page's own again
       if (host !== deep[id]) await setDeepTab(tabId, host);
       await toOffscreen({ type: 'offscreen-update', tabId, settings, tabGain, duck, output });
     } catch { /* tab gone */ }

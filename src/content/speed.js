@@ -16,7 +16,11 @@
    Shift + mouse wheel over a video: faster / slower by the same step
    (app.speedWheel, off by default; the listener exists only while it is on,
    because a non-passive wheel listener can slow down scrolling).
-   Never while typing or with a modifier, only in frames with media.
+   Never while typing or with a modifier, and only for media in use: a video on screen,
+   or audio / video that plays or has played. Not for live streams, not while a canvas
+   or an application widget has the focus, and on a page drawn on a large canvas only
+   while a video on screen is in use — such pages read the keyboard themselves.
+   Nothing while the extension is switched off for the site (the power button).
    A change is stored as the site's speed, like the popup slider.
 
    Badge: "1.5×" over the playing video for about a second whenever
@@ -37,17 +41,48 @@
   function createSpeed(env) {
     let last = 1.5; // what G goes back to
 
-    const mediaHere = () => document.querySelector('video, audio');
+    const onScreen = (el, w, h) => {
+      const r = el.getBoundingClientRect();
+      return r.width >= w && r.height >= h && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+    };
+    // a live stream (camera, call, remote screen) has no speed and no position to jump to
+    const live = (el) => { try { return !!el.srcObject && typeof el.srcObject.getTracks === 'function'; } catch { return false; } };
+    const media = () => [...document.querySelectorAll('video, audio')].filter((el) => !live(el));
+    const used = (el) => !el.paused || el.currentTime > 0;
 
+    /** A page drawn on a canvas (terminal, remote desktop, game, editor) reads the keyboard itself. */
+    function canvasApp() {
+      const quarter = innerWidth * innerHeight / 4;
+      return [...document.querySelectorAll('canvas')].some((c) => {
+        if (!onScreen(c, 1, 1)) return false;
+        const r = c.getBoundingClientRect();
+        return (Math.min(r.right, innerWidth) - Math.max(r.left, 0)) * (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) >= quarter;
+      });
+    }
+
+    /**
+     * Is there media the keys are meant for? Not any <audio> / <video> in the page: a sound that
+     * never played, a hidden helper element or a live stream must not take letters from the page.
+     */
+    function mediaHere() {
+      const all = media();
+      const videos = all.filter((el) => el.tagName === 'VIDEO' && onScreen(el, 80, 60));
+      if (canvasApp()) return videos.some(used); // only for a video the user is watching
+      // without a video on screen: something worth a speed (not a notification or effect sound) that plays or has played
+      return videos.length > 0 || all.some((el) => used(el) && !(el.duration < 30));
+    }
+
+    /** The key belongs to the page: a text field, or a focused canvas / application widget. */
     function typing(e) {
       const path = e.composedPath ? e.composedPath() : [e.target];
       return path.some((n) => n instanceof Element && (
-        n.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName) || n.getAttribute('role') === 'textbox'));
+        n.isContentEditable || /^(INPUT|TEXTAREA|SELECT|CANVAS|EMBED|OBJECT)$/.test(n.tagName)
+        || /^(textbox|searchbox|combobox|application)$/.test(n.getAttribute('role') || '')));
     }
 
     /** The media the keys act on: the largest playing one, else one that has played. */
     function target() {
-      const all = [...document.querySelectorAll('video, audio')];
+      const all = media();
       const area = (el) => { const r = el.getBoundingClientRect(); return r.width * r.height; };
       const playing = all.filter((el) => !el.paused).sort((a, b) => area(b) - area(a));
       return playing[0] || all.find((el) => el.currentTime > 0) || all[0] || null;
@@ -56,7 +91,7 @@
     function onKey(e) {
       if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !e.isTrusted || !env.alive()) return;
       const s = env.settings(), app = env.app();
-      if (!s || !app || !app.speedKeys || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
+      if (!s || !s.enabled || !app || !app.speedKeys || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
       const action = AE.speedKeyMap(app)[e.code];
       if (!action) return; // not one of ours: the page gets it untouched
       if (typing(e) || !mediaHere()) return;
@@ -184,7 +219,7 @@
     function onWheel(e) {
       if (!e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || !e.isTrusted || !env.alive()) return;
       const s = env.settings(), app = env.app();
-      if (!s || !app || !app.speedWheel || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
+      if (!s || !s.enabled || !app || !app.speedWheel || (app.speedKeysOff || {})[env.host()] || !AE.siteAllowed(app, env.host())) return;
       const d = e.deltaY || e.deltaX; // with Shift, some systems turn the wheel into horizontal scrolling
       if (!d || !overVideo(e.clientX, e.clientY)) return;
       e.preventDefault();

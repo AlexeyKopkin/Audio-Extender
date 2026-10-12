@@ -4,7 +4,7 @@ Everything needed for the Audio Extender pages on the [Chrome Web Store](https:/
 
 | What | File / value |
 |---|---|
-| Package | `audio_extender-chrome-0.5.0.zip` (one package for Chrome and Edge) |
+| Package | `audio_extender-chrome-0.5.1.zip` (one package for Chrome and Edge) |
 | Name | Audio Extender |
 | Short description (≤ 132 characters) | `listing/<lang>.md` → *Short description* |
 | Detailed description (plain text) | `listing/<lang>.md` → *Description* |
