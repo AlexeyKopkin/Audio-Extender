@@ -627,6 +627,7 @@
   $('#btn-power').addEventListener('click', () => {
     audio.enabled = !audio.enabled;
     commit();
+    if (audio.enabled) { autoDeepTab = null; autoDeepStart(); } // Chrome / Edge: a remembered device plays through deep mode again
   });
   $('#btn-reset').addEventListener('click', () => {
     if (data.app.perSite && host) {
@@ -917,7 +918,7 @@
 
   /** Chrome / Edge: a remembered device for this site → start deep mode as soon as the extension is opened here. */
   function autoDeepStart() {
-    if (OUT_MODE !== 'deep' || !API.canCapture || API.context === 'tab' || !tab || !AE.outputFor(data, host)) return;
+    if (OUT_MODE !== 'deep' || !API.canCapture || API.context === 'tab' || !tab || !AE.outputInUse(data, host)) return;
     if (autoDeepTab === tab.id) return;
     autoDeepTab = tab.id;
     autoDeep = 'pending';

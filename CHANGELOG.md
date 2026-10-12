@@ -2,6 +2,13 @@
 
 All notable changes to Audio Extender. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.1]
+
+### Fixed
+
+- The speed keys (`S`, `D`, `R`, `G`, `Z`, `X`) no longer take letters from pages that read the keyboard themselves. Before, any page with an audio or video element lost these keys outside text fields — also a terminal, a remote desktop, a game or an editor drawn on a canvas. Now the keys work only for media in use: a video on screen, or audio / video that plays or has played. They are left to the page while a canvas or an application widget has the focus, on a page drawn on a large canvas (unless a video on screen is in use there), for live streams (calls, remote screens), and when the only media is a short sound or one that never played
+- The power button now switches off everything for the site, not only the sound processing: the speed keys, the jump keys and Shift + wheel go back to the page, the video plays at its normal speed, the tab plays on the default device again, it is no longer lowered while another tab plays, and deep mode ends (Chrome / Edge). Switching the extension back on brings the site's speed and its output device back
+
 ## [0.5.0] — 2026-10-01
 
 The first release for Chrome and Edge, and many new features in every browser.

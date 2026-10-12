@@ -36,15 +36,18 @@
     base = next;
     settings = next && AE.withTabGain(next, tabGain, data && AE.normalize(data).app);
     pushSettings();
-    if (prev != null && next && next.fx.speed.value !== prev) speed.changed(next.fx.speed.value);
+    if (prev != null && next && next.enabled && next.fx.speed.value !== prev) speed.changed(next.fx.speed.value);
   }
 
   function pushSettings() {
     if (!settings) return;
+    // Switched off (the power button): everything is off — the page plays at its own 1× and isn't lowered for other tabs
+    const s = settings.enabled ? settings : { ...settings, fx: { ...settings.fx, speed: { ...settings.fx.speed, value: 1 } } };
+    const d = settings.enabled ? duck : 1;
     // Until the background has answered, the engine gets the settings (speed applies, keys work) but doesn't
     // process the sound yet: the tab may be in deep mode, and processing it twice would make it louder.
-    if (bypass || !greeted) toPage({ type: 'settings', settings, duck: 1, active: false });
-    else toPage({ type: 'settings', settings, duck, active: AE.needsProcessing(settings) || duck < 1 });
+    if (bypass || !greeted) toPage({ type: 'settings', settings: s, duck: 1, active: false });
+    else toPage({ type: 'settings', settings: s, duck: d, active: AE.needsProcessing(s) || d < 1 });
   }
 
   document.addEventListener(TO_CONTENT, (e) => {
@@ -93,15 +96,17 @@
     let want = null;      // { id, label } saved for this site
     let state = '';       // '' default | wait (needs a click) | on | lost (device gone) | failed
     let tried = null;     // id already tried silently in this document
+    let granted = null;   // id Firefox has let this document use (selected here): usable again without a click
     let chip = null;
 
     const sinkToPage = (id) => toPage({ type: 'sink', id });
 
     function refresh() {
       if (!supported) return;
-      const w = AE.outputFor(data, host);
+      const w = AE.outputInUse(data, host);
       if ((w && w.id) === (want && want.id)) { want = w; fillLabel(); return; }
       want = w;
+      if (want && want.id === granted) { use(want.id); return; } // switched off and on again
       sinkToPage('');
       set(want ? 'wait' : '');
     }
@@ -131,7 +136,7 @@
       }
     }
 
-    function use(id) { sinkToPage(id); set('on'); }
+    function use(id) { granted = id; sinkToPage(id); set('on'); }
 
     /** The device's name, as this document sees it once the device was selected here ('' if not). */
     async function labelOf(id) {
